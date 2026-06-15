@@ -1,0 +1,174 @@
+:root {
+  --motion-fast: 150ms;
+  --motion-normal: 200ms;
+  --motion-slow: 400ms;
+  --motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes cardEnter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cardExit {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes feedbackCorrect {
+  0% {
+    box-shadow: 0 0 0 0 rgba(45, 212, 191, 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(45, 212, 191, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(45, 212, 191, 0);
+  }
+}
+
+@keyframes feedbackWrong {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20%,
+  60% {
+    transform: translateX(-4px);
+  }
+  40%,
+  80% {
+    transform: translateX(4px);
+  }
+}
+
+@keyframes checkmarkIn {
+  from {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes milestoneBurst {
+  0% {
+    box-shadow: 0 0 0 0 rgba(232, 168, 56, 0.6);
+  }
+  100% {
+    box-shadow: 0 0 0 12px rgba(232, 168, 56, 0);
+  }
+}
+
+@keyframes gridDrift {
+  from {
+    transform: perspective(500px) rotateX(62deg) translateY(-12%) translateX(0);
+  }
+  to {
+    transform: perspective(500px) rotateX(62deg) translateY(-12%) translateX(48px);
+  }
+}
+
+@keyframes orbFloat {
+  from {
+    transform: translate(0, 0) scale(1);
+  }
+  to {
+    transform: translate(24px, -18px) scale(1.08);
+  }
+}
+
+@keyframes logoPulse {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 12px rgba(34, 211, 238, 0.5);
+  }
+  50% {
+    opacity: 0.75;
+    box-shadow: 0 0 20px rgba(34, 211, 238, 0.8);
+  }
+}
+
+@keyframes nodeReveal {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.motion-enter {
+  animation: cardEnter var(--motion-normal) var(--motion-ease) both;
+}
+
+.motion-exit {
+  animation: cardExit var(--motion-fast) ease both;
+}
+
+.feedback.correct.motion-feedback {
+  animation: feedbackCorrect 300ms ease;
+}
+
+.feedback.wrong.motion-feedback {
+  animation: feedbackWrong 250ms ease;
+}
+
+.done-badge.motion-check {
+  animation: checkmarkIn 300ms var(--motion-ease);
+}
+
+.concept-chip.milestone {
+  animation: milestoneBurst 500ms ease;
+}
+
+.progress-segment {
+  transition: width var(--motion-slow) var(--motion-ease);
+}
+
+.concept-chip.active {
+  transition: border-color var(--motion-normal), background var(--motion-normal);
+}
+
+.code-line.active {
+  transition: background var(--motion-fast) ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motion-enter,
+  .motion-exit,
+  .feedback.correct.motion-feedback,
+  .feedback.wrong.motion-feedback,
+  .done-badge.motion-check,
+  .concept-chip.milestone {
+    animation: none !important;
+  }
+
+  .progress-segment,
+  .concept-chip.active,
+  .code-line.active {
+    transition: none !important;
+  }
+
+  .ambient-grid,
+  .ambient-orb,
+  .logo-mark,
+  .skill-node-row {
+    animation: none !important;
+  }
+}

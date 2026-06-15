@@ -1,0 +1,40 @@
+---
+description: Folder layout and layer boundaries
+globs: src/**/*
+alwaysApply: false
+---
+
+# Architecture
+
+```
+src/
+  main.tsx, App.tsx          # Entry + routing
+  routes/                    # Page components (thin — wire data to UI)
+  components/                # UI (layout/, examples/, capstones/)
+  engine/                    # Business logic (grading, queues, Pyodide, traces)
+  store/                     # Zustand stores (progress persistence)
+  content/                   # Data layer
+    schema.ts                # Zod schemas (source of truth for shapes)
+    registry.ts              # Aggregates lessons, exams, capstones
+    lessons/                 # One file per lesson
+    capstones/               # Capstone projects + walkthrough helpers
+    examSets/                # Timed exam content
+  styles/                    # Global CSS
+tests/                       # Vitest unit tests (mirror engine/store)
+e2e/                         # Playwright smoke tests
+scripts/                     # validate-content, migrations, generators
+```
+
+## Layer rules
+
+1. **content/** — declarative data only; no React imports.
+2. **engine/** — pure functions and async runtimes; no React imports.
+3. **store/** — may import engine + content/registry; no component imports.
+4. **components/** — may import engine, store, content; keep pages in routes/.
+5. **routes/** — compose components; minimal logic.
+
+## Adding features
+
+- New example type → extend `content/schema.ts`, `engine/grader.ts`, and `ExampleCard.tsx`.
+- New route → add to `App.tsx` and `HudHeader.viewportTitle()`.
+- Progress fields → bump `schemaVersion` in `store/progress.ts` with migration in `persist` middleware.

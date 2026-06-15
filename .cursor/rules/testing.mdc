@@ -1,0 +1,31 @@
+---
+description: Testing conventions
+globs: "{tests,e2e,src}/**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# Testing
+
+## Unit tests (Vitest)
+
+- Live in `tests/`; name `{module}.test.ts`.
+- Cover engine and store logic — grader, SRS, queues, progress, registry.
+- Run: `npm run test`
+
+## E2E (Playwright)
+
+- Live in `e2e/`; smoke-test critical navigation flows.
+- Use HUD titles from `HudHeader` (`Command Overview`, not legacy names).
+- Dev server starts automatically via `playwright.config.ts`.
+- Run: `npm run test:e2e`
+
+## Content validation
+
+- Every lesson and capstone must pass Zod schemas.
+- Run: `npm run validate-content` after editing content files.
+
+## Before merge
+
+```bash
+npm run build && npm run test && npm run validate-content && npm run lint && npm run test:e2e
+```

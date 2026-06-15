@@ -1,0 +1,42 @@
+---
+description: Python Dojo project conventions — stack, scripts, and workflow
+alwaysApply: true
+---
+
+# Python Dojo
+
+Intro Python learning app: lessons, practice, exam prep, capstones. Runs entirely in the browser (Pyodide).
+
+## Stack
+
+- Vite 8 · React 19 · TypeScript (strict) · React Router 7
+- Zustand (progress store + localStorage persist)
+- Zod (content schemas)
+- Pyodide (in-browser Python), CodeMirror (editors)
+- Vitest (unit) · Playwright (e2e)
+
+## Commands
+
+| Command | Purpose |
+|---------|---------|
+| `npm run dev` | Dev server (port 5173) |
+| `npm run build` | Production build |
+| `npm run test` | Unit tests |
+| `npm run test:e2e` | Playwright smoke tests |
+| `npm run lint` | ESLint (src/ only) |
+| `npm run validate-content` | Zod-validate all lessons & capstones |
+
+## Workflow
+
+- Commit after each verified feature set; run `build`, `test`, and `validate-content` before committing.
+- Keep business logic in `src/engine/`, not in components.
+- Add lesson content under `src/content/lessons/`; validate with `npm run validate-content`.
+- Do not edit files under `reference/` — third-party clones for inspiration only.
+- UI uses the “command center” HUD theme; page titles live in `HudHeader.tsx` (`Command Overview`, `Review Session`, `Telemetry Log`, etc.).
+
+## Naming
+
+- Components: PascalCase (`ExampleCard.tsx`)
+- Engine/store/utils: camelCase files (`practiceQueue.ts`)
+- Lesson IDs: `lesson01` … `lesson16`
+- Example IDs: `{lesson}-c{n}-e{n}` pattern
