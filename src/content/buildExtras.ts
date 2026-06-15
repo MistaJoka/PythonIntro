@@ -1,7 +1,54 @@
 import type { Example } from './schema';
 
-/** Code challenge Build examples for L3, L6–L12. */
+/** Code challenge Build examples for L1–L2, L3, L6–L12. */
 export const BUILD_EXTRAS: Record<string, Example[]> = {
+  lesson01: [
+    {
+      id: 'l1-build-1',
+      type: 'codeChallenge',
+      stage: 'build',
+      tags: [],
+      prompt: 'Write greet(name) that returns an f-string greeting: Hello, {name}!',
+      starterCode: 'def greet(name):\n    pass',
+      tests: [
+        'assert greet("Ada") == "Hello, Ada!"',
+        'assert greet("Bob") == "Hello, Bob!"',
+      ],
+      explanation: 'Use return f"Hello, {name}!" to interpolate the name.',
+    },
+    {
+      id: 'l1-build-2',
+      type: 'codeChallenge',
+      stage: 'build',
+      tags: ['typeCoercion'],
+      prompt: 'Write double(x) that returns x multiplied by 2.',
+      starterCode: 'def double(x):\n    pass',
+      tests: ['assert double(3) == 6', 'assert double(0) == 0', 'assert double(-2) == -4'],
+      explanation: 'Return x * 2 — works for int and float.',
+    },
+  ],
+  lesson02: [
+    {
+      id: 'l2-build-1',
+      type: 'codeChallenge',
+      stage: 'build',
+      tags: ['truthiness'],
+      prompt: 'Write is_even(n) that returns True when n is divisible by 2.',
+      starterCode: 'def is_even(n):\n    pass',
+      tests: ['assert is_even(4) == True', 'assert is_even(3) == False', 'assert is_even(0) == True'],
+      explanation: 'Use n % 2 == 0 — the comparison already yields a bool.',
+    },
+    {
+      id: 'l2-build-2',
+      type: 'codeChallenge',
+      stage: 'build',
+      tags: [],
+      prompt: 'Write min_of(a, b) that returns the smaller of two numbers.',
+      starterCode: 'def min_of(a, b):\n    pass',
+      tests: ['assert min_of(3, 7) == 3', 'assert min_of(10, 2) == 2', 'assert min_of(5, 5) == 5'],
+      explanation: 'Return a if a <= b else b, or use min(a, b).',
+    },
+  ],
   lesson03: [
     {
       id: 'l3-build-1',

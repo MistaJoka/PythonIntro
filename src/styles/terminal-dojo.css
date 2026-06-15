@@ -2216,6 +2216,36 @@ button {
   text-decoration: none;
 }
 
+.capstone-card.complete {
+  border-color: var(--green, #3dd68c);
+}
+
+.capstone-done-badge {
+  color: var(--green, #3dd68c);
+  font-weight: 600;
+}
+
+.capstone-progress-summary {
+  margin: 0.5rem 0 0;
+  font-size: 0.9rem;
+  color: var(--green, #3dd68c);
+}
+
+.capstone-attempts {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.capstone-complete-banner {
+  margin: 0 0 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius);
+  background: rgba(61, 214, 140, 0.12);
+  border: 1px solid rgba(61, 214, 140, 0.35);
+  color: var(--green, #3dd68c);
+  font-size: 0.9rem;
+}
+
 .capstone-num {
   font-family: var(--font-code);
   font-size: 0.85rem;

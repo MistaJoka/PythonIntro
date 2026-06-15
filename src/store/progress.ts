@@ -19,13 +19,22 @@ export interface SessionPosition {
   updatedAt: string;
 }
 
+export interface CapstoneProgress {
+  code: string;
+  passed: boolean;
+  attempts: number;
+  completedAt?: string;
+  lastSeen: string;
+}
+
 export interface ProgressState {
-  schemaVersion: 3;
+  schemaVersion: 4;
   examples: Record<string, ExampleAttempt>;
   lessonChecks: Record<string, { score: number; date: string }>;
   srsQueue: { exampleId: string; dueDate: string; intervalDays: number }[];
   courseProgress: Record<string, number>;
   sessionPosition: Record<string, SessionPosition>;
+  capstones: Record<string, CapstoneProgress>;
   diagnostic: { date: string; tagScores: Record<string, number> } | null;
   examHistory: {
     id: string;
@@ -44,12 +53,13 @@ export interface ProgressState {
 }
 
 const initialState: ProgressState = {
-  schemaVersion: 3,
+  schemaVersion: 4,
   examples: {},
   lessonChecks: {},
   srsQueue: [],
   courseProgress: {},
   sessionPosition: {},
+  capstones: {},
   diagnostic: null,
   examHistory: [],
   examInProgress: null,
@@ -91,27 +101,47 @@ interface ProgressActions {
   importProgress: (json: string) => boolean;
   resetProgress: () => void;
   saveSessionPosition: (lessonId: string, conceptIndex: number, exampleIndex: number) => void;
+  saveCapstoneCode: (projectId: string, code: string) => void;
+  recordCapstoneAttempt: (projectId: string, code: string, correct: boolean) => void;
   setStrictFocus: (enabled: boolean) => void;
 }
 
 function migrateProgress(parsed: Record<string, unknown>): ProgressState {
   const base = parsed as Partial<ProgressState> & { schemaVersion?: number };
-  if (base.schemaVersion === 3) {
+  if (base.schemaVersion === 4) {
     return {
       ...initialState,
       ...base,
-      schemaVersion: 3,
+      schemaVersion: 4,
+      capstones: base.capstones ?? {},
       strictFocus: base.strictFocus ?? false,
     } as ProgressState;
   }
-  if (base.schemaVersion === 2) {
+  if (base.schemaVersion === 3) {
     return {
-      schemaVersion: 3,
+      schemaVersion: 4,
       examples: base.examples ?? {},
       lessonChecks: base.lessonChecks ?? {},
       srsQueue: base.srsQueue ?? [],
       courseProgress: recomputeCourseProgress(base.examples ?? {}),
       sessionPosition: base.sessionPosition ?? {},
+      capstones: {},
+      diagnostic: base.diagnostic ?? null,
+      examHistory: base.examHistory ?? [],
+      examInProgress: base.examInProgress ?? null,
+      readinessScore: base.readinessScore ?? 0,
+      strictFocus: base.strictFocus ?? false,
+    };
+  }
+  if (base.schemaVersion === 2) {
+    return {
+      schemaVersion: 4,
+      examples: base.examples ?? {},
+      lessonChecks: base.lessonChecks ?? {},
+      srsQueue: base.srsQueue ?? [],
+      courseProgress: recomputeCourseProgress(base.examples ?? {}),
+      sessionPosition: base.sessionPosition ?? {},
+      capstones: {},
       diagnostic: base.diagnostic ?? null,
       examHistory: base.examHistory ?? [],
       examInProgress: base.examInProgress ?? null,
@@ -224,13 +254,48 @@ export const useProgressStore = create<ProgressState & ProgressActions>()(
           },
         }));
       },
+      saveCapstoneCode: (projectId, code) => {
+        set((state) => {
+          const prev = state.capstones[projectId];
+          return {
+            capstones: {
+              ...state.capstones,
+              [projectId]: {
+                code,
+                attempts: prev?.attempts ?? 0,
+                passed: prev?.passed ?? false,
+                completedAt: prev?.completedAt,
+                lastSeen: new Date().toISOString(),
+              },
+            },
+          };
+        });
+      },
+      recordCapstoneAttempt: (projectId, code, correct) => {
+        set((state) => {
+          const prev = state.capstones[projectId];
+          const passed = correct || (prev?.passed ?? false);
+          return {
+            capstones: {
+              ...state.capstones,
+              [projectId]: {
+                code,
+                attempts: (prev?.attempts ?? 0) + 1,
+                passed,
+                completedAt: passed ? (prev?.completedAt ?? new Date().toISOString()) : undefined,
+                lastSeen: new Date().toISOString(),
+              },
+            },
+          };
+        });
+      },
       setStrictFocus: (enabled) => set({ strictFocus: enabled }),
     }),
     {
       name: 'intro-python-progress',
-      version: 3,
+      version: 4,
       migrate: (persisted, version) => {
-        if (version < 3) {
+        if (version < 4) {
           return migrateProgress(persisted as Record<string, unknown>);
         }
         return persisted as ProgressState;
@@ -252,6 +317,10 @@ export function countCompletedExamples(): number {
 
 export function getTotalExampleCount(): number {
   return getAllExamples().length;
+}
+
+export function countCompletedCapstones(): number {
+  return Object.values(useProgressStore.getState().capstones).filter((c) => c.passed).length;
 }
 
 export { recomputeCourseProgress, computeLessonProgress };

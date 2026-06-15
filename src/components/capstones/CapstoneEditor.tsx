@@ -1,10 +1,11 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import { python } from '@codemirror/lang-python';
 import type { CapstoneProject } from '../../content/capstones/schema';
 import { runCodeChallenge, runPython } from '../../engine/pyodide';
 import type { HumanizedError } from '../../engine/humanizeError';
 import { runWithTrace, type TraceStep } from '../../engine/traceRunner';
+import { useProgressStore } from '../../store/progress';
 import { CodeRunnerToolbar } from '../CodeRunnerToolbar';
 import { OutputPanel } from '../OutputPanel';
 import { RunFeedback } from '../RunFeedback';
@@ -15,7 +16,11 @@ interface CapstoneEditorProps {
 }
 
 export function CapstoneEditor({ project }: CapstoneEditorProps) {
-  const [code, setCode] = useState(project.starterCode);
+  const saved = useProgressStore((s) => s.capstones[project.id]);
+  const saveCapstoneCode = useProgressStore((s) => s.saveCapstoneCode);
+  const recordCapstoneAttempt = useProgressStore((s) => s.recordCapstoneAttempt);
+
+  const [code, setCode] = useState(() => saved?.code ?? project.starterCode);
   const [running, setRunning] = useState(false);
   const [tracing, setTracing] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -26,8 +31,13 @@ export function CapstoneEditor({ project }: CapstoneEditorProps) {
   const [traceError, setTraceError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [humanized, setHumanized] = useState<HumanizedError | undefined>();
-  const [passed, setPassed] = useState(false);
-  const [attempts, setAttempts] = useState(0);
+  const [passed, setPassed] = useState(() => saved?.passed ?? false);
+  const [attempts, setAttempts] = useState(() => saved?.attempts ?? 0);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => saveCapstoneCode(project.id, code), 400);
+    return () => window.clearTimeout(timer);
+  }, [code, project.id, saveCapstoneCode]);
 
   const handleRun = useCallback(async () => {
     setRunning(true);
@@ -78,18 +88,28 @@ export function CapstoneEditor({ project }: CapstoneEditorProps) {
       setFeedback(result.feedback);
       setHumanized(result.humanized);
       setPassed(result.correct);
+      recordCapstoneAttempt(project.id, code, result.correct);
     } catch (err) {
       setFeedback(err instanceof Error ? err.message : 'Run failed');
       setHumanized(undefined);
+      recordCapstoneAttempt(project.id, code, false);
     } finally {
       setTesting(false);
     }
-  }, [attempts, code, project.tests]);
+  }, [attempts, code, project.id, project.tests, recordCapstoneAttempt]);
+
+  const handleResetStarter = useCallback(() => {
+    setCode(project.starterCode);
+    saveCapstoneCode(project.id, project.starterCode);
+  }, [project.id, project.starterCode, saveCapstoneCode]);
 
   const showHint = !passed && attempts >= 2 && project.solutionHint;
 
   return (
     <div className="capstone-editor">
+      {saved?.passed && (
+        <p className="capstone-complete-banner">Project complete — your solution is saved.</p>
+      )}
       <CodeMirror
         value={code}
         height="320px"
@@ -110,7 +130,7 @@ export function CapstoneEditor({ project }: CapstoneEditorProps) {
         onTests={handleTests}
         extraActions={
           !passed ? (
-            <button type="button" className="btn-secondary" onClick={() => setCode(project.starterCode)}>
+            <button type="button" className="btn-secondary" onClick={handleResetStarter}>
               Reset starter
             </button>
           ) : undefined

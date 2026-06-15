@@ -17,10 +17,10 @@ Open [http://localhost:5173](http://localhost:5173)
 |---------|---------|
 | `npm run dev` | Dev server |
 | `npm run build` | Production build |
-| `npm run test` | Unit tests (47) |
+| `npm run test` | Unit tests (48) |
 | `npm run test:e2e` | Playwright smoke tests |
 | `npm run lint` | ESLint |
-| `npm run validate-content` | Validate 394 examples + 12 capstones against schema |
+| `npm run validate-content` | Validate 398 examples + 12 capstones against schema |
 
 ## Features
 
@@ -68,3 +68,15 @@ AI IDE rules live in `.cursor/rules/` for consistent agent behavior across sessi
 ## Stack
 
 Vite · React 19 · TypeScript · React Router · Zustand · Zod · Pyodide · CodeMirror
+
+## Deploy
+
+The app is a static Vite build. **Vercel** (recommended):
+
+1. Import [github.com/MistaJoka/PythonIntro](https://github.com/MistaJoka/PythonIntro) at [vercel.com/new](https://vercel.com/new)
+2. Framework preset: **Vite** — build command `npm run build`, output directory `dist`
+3. Deploy — `vercel.json` handles client-side routing for React Router
+
+Alternatively: `npm run build` then upload `dist/` to Netlify, GitHub Pages, or any static host.
+
+After deploy, confirm CI is green on GitHub Actions and run through one lesson + one capstone on the live URL.

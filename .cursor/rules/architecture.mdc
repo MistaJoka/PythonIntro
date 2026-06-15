@@ -38,3 +38,4 @@ scripts/                     # validate-content, migrations, generators
 - New example type → extend `content/schema.ts`, `engine/grader.ts`, and `ExampleCard.tsx`.
 - New route → add to `App.tsx` and `HudHeader.viewportTitle()`.
 - Progress fields → bump `schemaVersion` in `store/progress.ts` with migration in `persist` middleware.
+- Capstone code/completion → `store/progress.ts` `capstones` map (`saveCapstoneCode`, `recordCapstoneAttempt`).
