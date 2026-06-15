@@ -12,6 +12,8 @@ reference
 dist
 dist-ssr
 test-results
+__pycache__
+*.pyc
 *.local
 
 # Editor directories and files
