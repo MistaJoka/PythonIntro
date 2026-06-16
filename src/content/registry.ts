@@ -24,6 +24,8 @@ import { CHALLENGE_EXTRAS } from './challengeExtras';
 import { CAPSTONE_PROJECTS, validateCapstones } from './capstones/projects';
 export { CAPSTONE_PROJECTS, getCapstoneById, validateCapstones } from './capstones/projects';
 export type { CapstoneProject } from './capstones/schema';
+import { CHALLENGE_BUNDLES } from './challenges/bundles';
+import { challengeBundleSchema, type ChallengeBundle } from './challenges/schema';
 
 const ALL_LESSONS: Lesson[] = [
   lesson01,
@@ -132,7 +134,19 @@ export function getExampleById(id: string): { example: Example; lessonId: string
     const ex = exam.questions.find((e) => e.id === id);
     if (ex) return { example: ex, lessonId: 'exam' };
   }
+  for (const bundle of CHALLENGE_BUNDLES) {
+    const ex = bundle.examples.find((e) => e.id === id);
+    if (ex) return { example: ex, lessonId: 'challenge' };
+  }
   return undefined;
+}
+
+export function getChallengeBundles(): ChallengeBundle[] {
+  return CHALLENGE_BUNDLES;
+}
+
+export function getChallengeBundleById(id: string): ChallengeBundle | undefined {
+  return CHALLENGE_BUNDLES.find((b) => b.id === id);
 }
 
 export function getAllExamples(): Example[] {
@@ -157,6 +171,12 @@ export function validateAllLessons(): { ok: boolean; errors: string[] } {
   const capstoneResult = validateCapstones();
   if (!capstoneResult.ok) {
     errors.push(...capstoneResult.errors);
+  }
+  for (const bundle of CHALLENGE_BUNDLES) {
+    const result = challengeBundleSchema.safeParse(bundle);
+    if (!result.success) {
+      errors.push(`${bundle.id}: ${result.error.message}`);
+    }
   }
   return { ok: errors.length === 0, errors };
 }

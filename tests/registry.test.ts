@@ -4,8 +4,10 @@ import {
   getAllLessons,
   getAllExamples,
   getCapstoneCount,
+  getExampleById,
   CAPSTONE_PROJECTS,
 } from '../src/content/registry';
+import { getChallengeBundles } from '../src/content/registry';
 import { COURSE_LESSONS } from '../src/content/capstones/lessonIndex';
 import { CHALLENGE_EXTRAS } from '../src/content/challengeExtras';
 
@@ -67,6 +69,34 @@ describe('content registry', () => {
       for (const e of items) {
         expect(seen.has(e.id), `duplicate example id ${e.id}`).toBe(false);
         seen.add(e.id);
+      }
+    }
+  });
+
+  it('registers challenge bundles that all validate and resolve', () => {
+    const bundles = getChallengeBundles();
+    expect(bundles.length).toBeGreaterThanOrEqual(1);
+    const { ok, errors } = validateAllLessons();
+    expect(ok, errors.join('\n')).toBe(true);
+    for (const b of bundles) {
+      for (const ex of b.examples) {
+        expect(getExampleById(ex.id)?.example.id, `${b.id}/${ex.id} unresolved`).toBe(ex.id);
+      }
+    }
+  });
+
+  it('challenge bundles satisfy the item contract and have unique ids', () => {
+    const seen = new Set<string>();
+    for (const ex of getAllExamples()) seen.add(ex.id);
+    for (const b of getChallengeBundles()) {
+      expect(b.examples.length, `${b.id} item count`).toBeGreaterThanOrEqual(4);
+      const code = b.examples.filter((e) => e.type === 'codeChallenge');
+      const reasoning = b.examples.filter((e) => e.type !== 'codeChallenge');
+      expect(code.length, `${b.id} needs >=2 code`).toBeGreaterThanOrEqual(2);
+      expect(reasoning.length, `${b.id} needs >=2 reasoning`).toBeGreaterThanOrEqual(2);
+      for (const ex of b.examples) {
+        expect(seen.has(ex.id), `duplicate example id ${ex.id}`).toBe(false);
+        seen.add(ex.id);
       }
     }
   });
