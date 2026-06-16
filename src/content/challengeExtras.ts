@@ -1441,15 +1441,15 @@ export const CHALLENGE_EXTRAS: Record<string, Example[]> = {
       id: 'l16-chal-3',
       type: 'multipleChoice',
       stage: 'debug',
-      tags: ['generators'],
+      tags: ['typeHints'],
       prompt:
-        'What does this print?\n\ndef nums():\n    yield 1\n    yield 2\n\ng = nums()\nprint(list(g))\nprint(list(g))',
-      options: ['[1, 2] then []', '[1, 2] then [1, 2]', '[1, 2] then [2]', '[] then [1, 2]'],
+        'What does type(make_label(7)).__name__ evaluate to?\n\ndef make_label(n) -> int:\n    return f"#{n}"\n\nresult = make_label(7)',
+      options: ["'str'", "'int'", 'TypeError', "'#7'"],
       answerIndex: 0,
       explanation:
-        'g is a generator object created once. The first list(g) drives it to completion, producing [1, 2] and EXHAUSTING it. A generator does not rewind: the second list(g) finds nothing left to yield, so it is the empty list []. To get [1, 2] again you would need a fresh nums().',
+        'The -> int annotation is a HINT only — Python does not enforce it at runtime. make_label returns the f-string "#7", which is a str, so the function happily returns a str despite the -> int annotation. type(result).__name__ is therefore "str". No error is raised; nothing checks that the return type matches the hint.',
       trapNote:
-        'Generators are single-pass. The same generator object cannot be iterated twice — the second pass is empty, not a repeat.',
+        'Type hints (-> int, x: int) are never enforced or coerced at runtime — they are documentation for tools like mypy. A function annotated -> int can return any type without raising.',
     },
     {
       id: 'l16-chal-4',
