@@ -374,12 +374,12 @@ export const CHALLENGE_EXTRAS: Record<string, Example[]> = {
           note: 'The def runs now: the default b=base is evaluated once, capturing the CURRENT value 10. The default is frozen at 10.',
         },
         {
-          line: 5,
+          line: 6,
           vars: { base: '100' },
           note: 'base is rebound to 100, but the function already captured 10 — this does not change the default.',
         },
         {
-          line: 6,
+          line: 7,
           vars: { base: '100' },
           output: '15',
           note: 'add_base(5) uses the captured default b = 10, returning 5 + 10 = 15.',
