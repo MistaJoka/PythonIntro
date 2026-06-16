@@ -300,4 +300,288 @@ export const CHALLENGE_EXTRAS: Record<string, Example[]> = {
         'The loop runs while n <= 3 with n starting at 1: it adds 1, then 2, then 3, giving total = 6, and stops when n becomes 4. The trap answer 10 comes from also adding n = 4 (treating the bound as inclusive of 4).',
     },
   ],
+  lesson05: [
+    {
+      id: 'l5-chal-1',
+      type: 'codeChallenge',
+      stage: 'build',
+      tags: ['scope'],
+      prompt:
+        'A module sets RATE = 0.10. Write discounted(price, rate=RATE) that returns price * (1 - rate) rounded to 2 decimals. The default must capture the value of RATE at the moment the function is defined — later reassigning RATE must not change the default.',
+      starterCode: 'RATE = 0.10\n\ndef discounted(price, rate=RATE):\n    pass\n\nRATE = 0.50  # reassigned AFTER the def — must not affect the default',
+      tests: [
+        'assert discounted(100) == 90.0',
+        'assert discounted(100, 0.25) == 75.0',
+        'assert discounted(0) == 0.0',
+        'assert discounted(50, 0) == 50.0',
+      ],
+      explanation:
+        'Return round(price * (1 - rate), 2). Default arguments are evaluated ONCE, when the def statement runs — at that point RATE is 0.10, so the default is permanently 0.10. The later RATE = 0.50 rebinds the global name but the function already captured the old value, so discounted(100) is 90.0, not 50.0.',
+      trapNote:
+        'A default value is frozen at def time, not looked up on each call. Reassigning RATE afterward does NOT change the default.',
+      solutionHint: 'return round(price * (1 - rate), 2)',
+    },
+    {
+      id: 'l5-chal-2',
+      type: 'codeChallenge',
+      stage: 'build',
+      tags: ['scope'],
+      prompt:
+        'Write clamp(value, low=0, high=100) that returns value forced into the range [low, high]: low if value is below low, high if above high, otherwise value unchanged. The boundaries low and high are inclusive.',
+      starterCode: 'def clamp(value, low=0, high=100):\n    pass',
+      tests: [
+        'assert clamp(50) == 50',
+        'assert clamp(-10) == 0',
+        'assert clamp(250) == 100',
+        'assert clamp(50, 60, 90) == 60',
+        'assert clamp(0) == 0',
+        'assert clamp(100) == 100',
+      ],
+      explanation:
+        'Guard the two ends first: if value < low return low; if value > high return high; else return value. Using strict < and > (not <= / >=) keeps the boundaries inclusive — clamp(0) and clamp(100) pass through unchanged because they are exactly on the edges, not outside them.',
+      trapNote:
+        'Inclusive boundaries need < and >, not <= and >=. Writing value <= low would wrongly clamp an in-range value sitting exactly on low.',
+      solutionHint:
+        'if value < low: return low  /  if value > high: return high  /  return value.',
+    },
+    {
+      id: 'l5-chal-3',
+      type: 'multipleChoice',
+      stage: 'debug',
+      tags: ['scope'],
+      prompt:
+        'What is result after this runs?\n\ndef shout(word):\n    print(word.upper())\n\nresult = shout("hi")',
+      options: ['None', "'HI'", "'hi'", 'A NameError'],
+      answerIndex: 0,
+      explanation:
+        'shout prints "HI" as a side effect but has no return statement, so it falls off the end and returns None. The call expression shout("hi") therefore evaluates to None, and result is bound to None. Printing a value is not the same as returning it.',
+      trapNote:
+        'A function with no return (or a bare return) yields None. print(...) displays text but the function still returns None.',
+    },
+    {
+      id: 'l5-chal-4',
+      type: 'traceSteps',
+      stage: 'stretch',
+      tags: ['scope'],
+      prompt:
+        'Trace how the default argument captures base, then predict the output.',
+      code: 'base = 10\n\ndef add_base(n, b=base):\n    return n + b\n\nbase = 100\nprint(add_base(5))',
+      steps: [
+        { line: 1, vars: { base: '10' } },
+        {
+          line: 3,
+          vars: { base: '10' },
+          note: 'The def runs now: the default b=base is evaluated once, capturing the CURRENT value 10. The default is frozen at 10.',
+        },
+        {
+          line: 5,
+          vars: { base: '100' },
+          note: 'base is rebound to 100, but the function already captured 10 — this does not change the default.',
+        },
+        {
+          line: 6,
+          vars: { base: '100' },
+          output: '15',
+          note: 'add_base(5) uses the captured default b = 10, returning 5 + 10 = 15.',
+        },
+      ],
+      question: 'What does this program print?',
+      options: ['15', '105', '110', '10', 'None'],
+      answerIndex: 0,
+      explanation:
+        'The default b=base is evaluated a single time when def runs, capturing base = 10. Reassigning base to 100 afterward has no effect on the already-frozen default, so add_base(5) returns 5 + 10 = 15. The trap answer 105 assumes the default is looked up fresh on each call.',
+    },
+  ],
+  lesson06: [
+    {
+      id: 'l6-chal-1',
+      type: 'codeChallenge',
+      stage: 'build',
+      tags: ['typeCoercion'],
+      prompt:
+        'Write is_palindrome(s) that returns True if s reads the same forwards and backwards, ignoring case. Compare the lowercased string against its reverse using slicing.',
+      starterCode: 'def is_palindrome(s):\n    pass',
+      tests: [
+        'assert is_palindrome("RaceCar") == True',
+        'assert is_palindrome("hello") == False',
+        'assert is_palindrome("") == True',
+        'assert is_palindrome("a") == True',
+        'assert is_palindrome("Ab") == False',
+      ],
+      explanation:
+        'Lowercase once, then compare to the reversed copy: cleaned = s.lower(); return cleaned == cleaned[::-1]. The [::-1] step-slice walks the string backwards to build a reversed copy. An empty string equals its own reverse, so is_palindrome("") is True, and a single character is trivially a palindrome.',
+      trapNote:
+        'Strings are immutable — s[::-1] returns a NEW reversed string; it never modifies s. There is no s.reverse() method on strings.',
+      solutionHint: 'cleaned = s.lower()  /  return cleaned == cleaned[::-1]',
+    },
+    {
+      id: 'l6-chal-2',
+      type: 'codeChallenge',
+      stage: 'build',
+      tags: ['typeCoercion'],
+      prompt:
+        'Write initials(name) that returns the uppercase first letter of each whitespace-separated word, concatenated. Extra leading/trailing/internal spaces must be ignored, and an empty or all-space string returns "".',
+      starterCode: 'def initials(name):\n    pass',
+      tests: [
+        'assert initials("ada lovelace") == "AL"',
+        'assert initials("Grace Brewster Murray Hopper") == "GBMH"',
+        'assert initials("") == ""',
+        'assert initials("   leading spaces  ") == "LS"',
+        'assert initials("one") == "O"',
+      ],
+      explanation:
+        'name.split() with no argument splits on runs of whitespace AND drops empty pieces, so leading/trailing/multiple spaces are handled for free and "" yields the empty list []. Loop over the words, take word[0].upper(), and build up the result string. An empty input gives no words, so the loop never runs and "" is returned.',
+      trapNote:
+        'name.split(" ") (with an explicit space) keeps empty strings between repeated spaces and would crash on word[0]. Bare .split() collapses whitespace and is what you want here.',
+      solutionHint:
+        'letters = ""  /  for word in name.split(): letters += word[0].upper()  /  return letters.',
+    },
+    {
+      id: 'l6-chal-3',
+      type: 'multipleChoice',
+      stage: 'debug',
+      tags: ['typeCoercion'],
+      prompt:
+        'What is printed?\n\ns = "hello"\ns.upper()\nprint(s)',
+      options: ['hello', 'HELLO', 'None', 'An AttributeError'],
+      answerIndex: 0,
+      explanation:
+        'Strings are immutable. s.upper() computes a NEW string "HELLO" and returns it, but nothing captures that return value, so s itself is never changed and still refers to "hello". To keep the result you must reassign: s = s.upper().',
+      trapNote:
+        'String methods never mutate in place — they return a new string. Calling s.upper() without assigning the result does nothing observable.',
+    },
+    {
+      id: 'l6-chal-4',
+      type: 'traceSteps',
+      stage: 'stretch',
+      tags: ['offByOne'],
+      prompt: 'Trace these slices on "python" and predict the output.',
+      code: 's = "python"\na = s[1:4]\nb = s[::-1]\nc = b[:3]\nprint(c)',
+      steps: [
+        { line: 1, vars: { s: "'python'" } },
+        {
+          line: 2,
+          vars: { s: "'python'", a: "'yth'" },
+          note: 's[1:4] takes indices 1,2,3 (4 is excluded): y, t, h.',
+        },
+        {
+          line: 3,
+          vars: { s: "'python'", a: "'yth'", b: "'nohtyp'" },
+          note: 's[::-1] reverses the whole string into a new string.',
+        },
+        {
+          line: 4,
+          vars: { s: "'python'", a: "'yth'", b: "'nohtyp'", c: "'noh'" },
+          note: 'b[:3] takes the first three chars of "nohtyp": n, o, h.',
+        },
+        {
+          line: 5,
+          vars: { s: "'python'", a: "'yth'", b: "'nohtyp'", c: "'noh'" },
+          output: 'noh',
+        },
+      ],
+      question: 'What does this program print?',
+      options: ['noh', 'pyt', 'hon', 'nop', 'yth'],
+      answerIndex: 0,
+      explanation:
+        's[::-1] reverses "python" to "nohtyp", and b[:3] slices its first three characters "noh". The stop index in a slice is exclusive, which is why s[1:4] is "yth" (not "ytho") — though a is never printed, it is the classic distractor.',
+    },
+  ],
+  lesson07: [
+    {
+      id: 'l7-chal-1',
+      type: 'codeChallenge',
+      stage: 'build',
+      tags: ['aliasing'],
+      prompt:
+        'Write without_first(items) that returns a NEW list containing every element except the one at index 0. The original list passed in must NOT be modified.',
+      starterCode: 'def without_first(items):\n    pass',
+      tests: [
+        'assert without_first([1, 2, 3]) == [2, 3]',
+        'assert without_first([]) == []',
+        'assert without_first([9]) == []',
+        'assert without_first([1, 1, 1]) == [1, 1]',
+        "nums = [1, 2, 3]\nwithout_first(nums)\nassert nums == [1, 2, 3]",
+      ],
+      explanation:
+        'return items[1:]. Slicing a list produces a brand-new list, so the caller\'s list is untouched. Slicing also handles the edge cases gracefully: [][1:] is [] and [9][1:] is [] — no IndexError, because slice bounds are clamped, unlike indexing.',
+      trapNote:
+        'items.pop(0) or del items[0] would mutate the caller\'s list in place. Slicing items[1:] returns a copy and leaves the original alone.',
+      solutionHint: 'return items[1:]',
+    },
+    {
+      id: 'l7-chal-2',
+      type: 'codeChallenge',
+      stage: 'build',
+      tags: ['mutation'],
+      prompt:
+        'Write running_max(nums) that returns a new list where each position holds the maximum seen so far. For [3, 1, 4, 1, 5] the result is [3, 3, 4, 4, 5]. An empty input returns [].',
+      starterCode: 'def running_max(nums):\n    pass',
+      tests: [
+        'assert running_max([3, 1, 4, 1, 5]) == [3, 3, 4, 4, 5]',
+        'assert running_max([]) == []',
+        'assert running_max([7]) == [7]',
+        'assert running_max([-1, -5, -2]) == [-1, -1, -1]',
+        'assert running_max([2, 2, 2]) == [2, 2, 2]',
+      ],
+      explanation:
+        'Build a fresh result list with append. Track best, starting unset (None); for each n, raise best when n is larger, then append the current best. Initializing best to None (rather than 0) is what makes the all-negative case work — starting at 0 would wrongly report 0 as the running max for [-1, -5, -2].',
+      trapNote:
+        'result.append(best) returns None — never write result = result.append(best). append mutates the list in place and you keep using result directly.',
+      solutionHint:
+        'result = []  /  best = None  /  for n in nums: if best is None or n > best: best = n; result.append(best)  /  return result.',
+    },
+    {
+      id: 'l7-chal-3',
+      type: 'multipleChoice',
+      stage: 'debug',
+      tags: ['aliasing', 'mutation'],
+      prompt:
+        'What is a after this runs?\n\na = [1, 2, 3]\nb = a\nb.append(4)',
+      options: ['[1, 2, 3, 4]', '[1, 2, 3]', '[4]', '[[1, 2, 3], 4]'],
+      answerIndex: 0,
+      explanation:
+        'b = a does NOT copy the list — it binds b to the very same list object a refers to (aliasing). b.append(4) mutates that shared object in place, so the change is visible through both names: a is [1, 2, 3, 4]. To get an independent copy you would write b = a[:] or b = list(a).',
+      trapNote:
+        'Assignment of a list never copies it. b = a makes an alias; mutating through one name is seen through the other.',
+    },
+    {
+      id: 'l7-chal-4',
+      type: 'traceSteps',
+      stage: 'stretch',
+      tags: ['mutation'],
+      prompt:
+        'Trace this. .sort() sorts in place and returns None — watch what result becomes.',
+      code: 'nums = [3, 1, 2]\nresult = nums.sort()\nprint(result)\nprint(nums)',
+      steps: [
+        { line: 1, vars: { nums: '[3, 1, 2]' } },
+        {
+          line: 2,
+          vars: { nums: '[1, 2, 3]', result: 'None' },
+          note: 'nums.sort() reorders nums in place to [1, 2, 3] and RETURNS None, so result is None.',
+        },
+        {
+          line: 3,
+          vars: { nums: '[1, 2, 3]', result: 'None' },
+          output: 'None',
+        },
+        {
+          line: 4,
+          vars: { nums: '[1, 2, 3]', result: 'None' },
+          output: '[1, 2, 3]',
+        },
+      ],
+      question: 'What are the two printed lines, in order?',
+      options: [
+        'None then [1, 2, 3]',
+        '[1, 2, 3] then [1, 2, 3]',
+        '[1, 2, 3] then None',
+        'None then [3, 1, 2]',
+        '[3, 1, 2] then [1, 2, 3]',
+      ],
+      answerIndex: 0,
+      explanation:
+        'list.sort() mutates the list in place and returns None. So result = nums.sort() binds result to None (first line prints None), while nums itself is now sorted to [1, 2, 3] (second line). The trap is expecting result to hold the sorted list — that is what sorted(nums) would give; .sort() returns nothing.',
+    },
+  ],
 };
