@@ -46,6 +46,16 @@ describe('content registry', () => {
     expect(challenge!.examples.filter((e) => e.type === 'codeChallenge')).toHaveLength(2);
   });
 
+  it('every lesson has a 4-item challenge concept (2 code + 2 reasoning)', () => {
+    for (const lesson of getAllLessons()) {
+      const challenge = lesson.concepts.find((c) => c.id === `${lesson.id}-challenge`);
+      expect(challenge, `${lesson.id} missing challenge concept`).toBeDefined();
+      expect(challenge!.examples, `${lesson.id} challenge count`).toHaveLength(4);
+      const code = challenge!.examples.filter((e) => e.type === 'codeChallenge');
+      expect(code.length, `${lesson.id} should have 2 code challenges`).toBe(2);
+    }
+  });
+
   it('every challenge entry has 4 items (2 code) with unique ids', () => {
     const seen = new Set<string>();
     for (const [lessonId, items] of Object.entries(CHALLENGE_EXTRAS)) {
