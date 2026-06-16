@@ -1,8 +1,9 @@
-import type { PyodideInterface } from 'pyodide';
+import { loadPyodide, version as PYODIDE_PACKAGE_VERSION, type PyodideInterface } from 'pyodide';
 import runPythonHelperSource from './runPythonHelper.py?raw';
 import { formatFeedback, humanizePythonError, type HumanizedError } from './humanizeError';
 
-const PYODIDE_CDN = 'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/';
+/** Must match the installed `pyodide` npm package — Pyodide rejects mismatched indexURL. */
+export const PYODIDE_INDEX_URL = `https://cdn.jsdelivr.net/pyodide/v${PYODIDE_PACKAGE_VERSION}/full/`;
 
 let pyodidePromise: Promise<PyodideInterface> | null = null;
 let loadError: string | null = null;
@@ -21,6 +22,34 @@ export interface CodeChallengeResult {
   humanized?: HumanizedError;
 }
 
+export function humanizePyodideLoadError(raw: string): HumanizedError {
+  if (raw.includes('Pyodide version does not match')) {
+    return {
+      short: 'Python runtime version mismatch',
+      friendly:
+        'The in-browser Python runtime could not start because its files do not match the app version. Refresh the page; if this persists, clear cache and reload.',
+      raw,
+    };
+  }
+  if (
+    raw.includes('Failed to fetch dynamically imported module') ||
+    raw.includes('Failed to load') ||
+    raw.includes('fetch')
+  ) {
+    return {
+      short: 'Python runtime failed to download',
+      friendly:
+        'Could not download the in-browser Python runtime (Pyodide). Check your network connection and try again.',
+      raw,
+    };
+  }
+  return {
+    short: 'Python runtime unavailable',
+    friendly: 'The in-browser Python runtime failed to start. Refresh and try again.',
+    raw,
+  };
+}
+
 async function ensureRunPythonHelper(pyodide: PyodideInterface): Promise<void> {
   if (!runPythonHelperReady) {
     runPythonHelperReady = pyodide.runPythonAsync(runPythonHelperSource).then(() => undefined);
@@ -35,14 +64,18 @@ function parsePythonException(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
 }
 
+/** Reset loader state — for tests only. */
+export function resetPyodideLoaderForTests(): void {
+  pyodidePromise = null;
+  loadError = null;
+  runPythonHelperReady = null;
+}
+
 export async function getPyodide(): Promise<PyodideInterface> {
   if (loadError) throw new Error(loadError);
   if (!pyodidePromise) {
-    pyodidePromise = (async () => {
-      const { loadPyodide } = await import('pyodide');
-      return loadPyodide({ indexURL: PYODIDE_CDN });
-    })().catch((err: unknown) => {
-      loadError = err instanceof Error ? err.message : 'Failed to load Pyodide';
+    pyodidePromise = loadPyodide({ indexURL: PYODIDE_INDEX_URL }).catch((err: unknown) => {
+      loadError = parsePythonException(err);
       pyodidePromise = null;
       throw err;
     });
@@ -68,7 +101,10 @@ json.dumps(run_user_code(_run_user_source))
     return { ...parsed, humanized };
   } catch (err) {
     const raw = parsePythonException(err);
-    const humanized = humanizePythonError(raw);
+    const humanized =
+      raw === loadError || raw.includes('Pyodide') || raw.includes('fetch')
+        ? humanizePyodideLoadError(raw)
+        : humanizePythonError(raw);
     return { stdout: '', stderr: '', error: raw, humanized };
   }
 }
@@ -79,6 +115,7 @@ export async function runCodeChallenge(
 ): Promise<CodeChallengeResult> {
   try {
     const pyodide = await getPyodide();
+    await ensureRunPythonHelper(pyodide);
     await pyodide.runPythonAsync(userCode);
     for (let i = 0; i < tests.length; i++) {
       try {
@@ -96,7 +133,10 @@ export async function runCodeChallenge(
     return { correct: true, feedback: 'All tests passed!' };
   } catch (err) {
     const raw = parsePythonException(err);
-    const humanized = humanizePythonError(raw);
+    const humanized =
+      raw === loadError || raw.includes('Pyodide') || raw.includes('fetch')
+        ? humanizePyodideLoadError(raw)
+        : humanizePythonError(raw);
     return {
       correct: false,
       feedback: formatFeedback(humanized, 'Runtime error'),
@@ -108,3 +148,5 @@ export async function runCodeChallenge(
 export function isPyodideLoading(): boolean {
   return pyodidePromise !== null && loadError === null;
 }
+
+export { PYODIDE_PACKAGE_VERSION };

@@ -17,7 +17,7 @@ Open [http://localhost:5173](http://localhost:5173)
 |---------|---------|
 | `npm run dev` | Dev server |
 | `npm run build` | Production build |
-| `npm run test` | Unit tests (48) |
+| `npm run test` | Unit tests (52) |
 | `npm run test:e2e` | Playwright smoke tests |
 | `npm run lint` | ESLint |
 | `npm run validate-content` | Validate 398 examples + 12 capstones against schema |
@@ -48,8 +48,9 @@ Open [http://localhost:5173](http://localhost:5173)
 - Anki CSV export of missed examples
 
 ### Live coding (Pyodide)
-- Code challenges in Lessons 4 & 5 (and expandable)
-- Runs in-browser via Pyodide CDN (~8MB, cached after first load)
+- Code challenges and live execution trace run in-browser via Pyodide CDN
+- CDN version is derived from the installed `pyodide` npm package (must stay in sync)
+- First load is ~8MB; cached after that
 
 ## Project structure
 

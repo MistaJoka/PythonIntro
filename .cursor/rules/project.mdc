@@ -12,7 +12,7 @@ Intro Python learning app: lessons, practice, exam prep, capstones. Runs entirel
 - Vite 8 · React 19 · TypeScript (strict) · React Router 7
 - Zustand (progress store + localStorage persist)
 - Zod (content schemas)
-- Pyodide (in-browser Python), CodeMirror (editors)
+- Pyodide (in-browser Python), CodeMirror (editors) — `PYODIDE_INDEX_URL` must match npm `pyodide` version
 - Vitest (unit) · Playwright (e2e)
 
 ## Commands
