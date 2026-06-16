@@ -4,8 +4,6 @@ import { gradeExample } from '../../engine/grader';
 import { shouldAllowContinue } from '../../engine/focusGate';
 import { useProgressStore } from '../../store/progress';
 import { StateVisualizer } from '../StateVisualizer';
-import { runWithTrace, type TraceStep } from '../../engine/traceRunner';
-import { TracePanel } from '../TracePanel';
 
 const CodeChallengeEditor = lazy(() =>
   import('./CodeChallengeEditor').then((m) => ({ default: m.CodeChallengeEditor })),
@@ -22,44 +20,6 @@ const DragBlankEditor = lazy(() =>
 
 function EditorFallback() {
   return <p className="editor-loading">Loading activity…</p>;
-}
-
-function TraceStepsLiveTrace({ code }: { code: string }) {
-  const [open, setOpen] = useState(false);
-  const [tracing, setTracing] = useState(false);
-  const [steps, setSteps] = useState<TraceStep[]>([]);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleTrace = useCallback(async () => {
-    setOpen(true);
-    setTracing(true);
-    setSteps([]);
-    setError(null);
-    try {
-      const result = await runWithTrace(code);
-      setSteps(result.steps);
-      setError(result.error ?? null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Trace failed');
-    } finally {
-      setTracing(false);
-    }
-  }, [code]);
-
-  return (
-    <div className="trace-steps-live">
-      <button type="button" className="btn-secondary btn-text" onClick={handleTrace} disabled={tracing}>
-        {tracing ? 'Tracing…' : 'Live trace this code'}
-      </button>
-      {open && (
-        tracing ? (
-          <p className="hint-text">Tracing execution…</p>
-        ) : (
-          <TracePanel code={code} steps={steps} error={error} />
-        )
-      )}
-    </div>
-  );
 }
 
 function McOptions({
@@ -229,11 +189,8 @@ export function ExampleCard({
             />
           )}
           {examMode && <pre className="code-block">{example.code}</pre>}
-          {!examMode && (
-            <TraceStepsLiveTrace code={example.code} />
-          )}
           {!traceReady && !examMode && (
-            <p className="step-gate-hint">Step through the code before predicting the output.</p>
+            <p className="step-gate-hint">Step through every execution step above before choosing an answer.</p>
           )}
           <p className="question">{example.question}</p>
           <McOptions

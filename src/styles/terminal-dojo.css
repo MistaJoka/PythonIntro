@@ -1215,6 +1215,93 @@ a:hover {
   margin-bottom: 0.75rem;
 }
 
+.execution-trace {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.85rem 1rem;
+}
+
+.execution-trace:focus {
+  outline: 2px solid rgba(232, 168, 56, 0.45);
+  outline-offset: 2px;
+}
+
+.execution-trace-header {
+  margin-bottom: 0.65rem;
+}
+
+.execution-trace-label {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cyan);
+}
+
+.execution-trace-hint {
+  margin: 0.25rem 0 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.execution-trace-meta {
+  margin-bottom: 0.5rem;
+}
+
+.execution-trace .code-line.passed {
+  opacity: 0.55;
+}
+
+.execution-var-table .var-changed td {
+  color: var(--amber);
+}
+
+.step-visit-track {
+  height: 4px;
+  margin: 0.35rem 0 0.5rem;
+  background: var(--bg);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.step-visit-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--cyan), var(--amber));
+  transition: width 0.2s ease;
+}
+
+.step-visit-count {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--amber);
+}
+
+.step-visit-count.complete {
+  color: var(--green, #3dd68c);
+}
+
+@keyframes step-next-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(232, 168, 56, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(232, 168, 56, 0.15);
+  }
+}
+
+.step-next-pulse {
+  animation: step-next-pulse 1.6s ease-in-out infinite;
+}
+
+.step-jump-btn {
+  margin-top: 0.35rem;
+  font-size: 0.82rem;
+  color: var(--cyan);
+}
+
 .step-controls {
   display: flex;
   align-items: center;
