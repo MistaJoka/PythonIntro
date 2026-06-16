@@ -7,6 +7,7 @@ import {
   CAPSTONE_PROJECTS,
 } from '../src/content/registry';
 import { COURSE_LESSONS } from '../src/content/capstones/lessonIndex';
+import { CHALLENGE_EXTRAS } from '../src/content/challengeExtras';
 
 describe('content registry', () => {
   it('validates all lessons against schema', () => {
@@ -43,5 +44,20 @@ describe('content registry', () => {
     expect(challenge!.title).toBe('Challenge — interview-grade');
     expect(challenge!.examples).toHaveLength(4);
     expect(challenge!.examples.filter((e) => e.type === 'codeChallenge')).toHaveLength(2);
+  });
+
+  it('every challenge entry has 4 items (2 code) with unique ids', () => {
+    const seen = new Set<string>();
+    for (const [lessonId, items] of Object.entries(CHALLENGE_EXTRAS)) {
+      expect(items, `${lessonId} item count`).toHaveLength(4);
+      expect(
+        items.filter((e) => e.type === 'codeChallenge'),
+        `${lessonId} code-challenge count`,
+      ).toHaveLength(2);
+      for (const e of items) {
+        expect(seen.has(e.id), `duplicate example id ${e.id}`).toBe(false);
+        seen.add(e.id);
+      }
+    }
   });
 });
