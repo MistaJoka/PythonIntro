@@ -17,12 +17,12 @@ export const CHALLENGE_EXTRAS: Record<string, Example[]> = {
       starterCode: 'def to_cents(price):\n    pass',
       tests: [
         'assert to_cents("12.34") == 1234',
-        'assert to_cents("0.10") == 10',
+        'assert to_cents("0.29") == 29',
         'assert to_cents("100") == 10000',
       ],
       explanation:
-        'float("0.10") * 100 is 10.000000000000002. int() would truncate to 9 — round() gives the correct 10. Return round(float(price) * 100).',
-      trapNote: 'int(float(price) * 100) silently loses a cent on values like 0.10 and 0.29.',
+        'float("0.29") * 100 is 28.999999999999996. int() would truncate to 28 — round() gives the correct 29. Return round(float(price) * 100).',
+      trapNote: 'int(float(price) * 100) silently loses a cent on values like 0.29 and 0.58.',
       solutionHint: 'Use round(...), not int(...), after multiplying.',
     },
     {
