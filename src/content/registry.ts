@@ -20,6 +20,7 @@ import type { ExamSet } from './examSets/schema';
 import { mergeLessonExtras } from './lessonExtras';
 import { INTERACTIVE_EXTRAS } from './interactiveExtras';
 import { BUILD_EXTRAS } from './buildExtras';
+import { CHALLENGE_EXTRAS } from './challengeExtras';
 import { CAPSTONE_PROJECTS, validateCapstones } from './capstones/projects';
 export { CAPSTONE_PROJECTS, getCapstoneById, validateCapstones } from './capstones/projects';
 export type { CapstoneProject } from './capstones/schema';
@@ -41,7 +42,22 @@ const ALL_LESSONS: Lesson[] = [
   lesson14,
   lesson15,
   lesson16,
-].map((l) => mergeBuildExtras(mergeInteractiveExtras(mergeLessonExtras(l))));
+].map((l) => mergeChallengeExtras(mergeBuildExtras(mergeInteractiveExtras(mergeLessonExtras(l)))));
+
+function mergeChallengeExtras<T extends { id: string; concepts: { id: string; title: string; objective: string; miniNote?: string; examples: Example[] }[] }>(
+  lesson: T,
+): T {
+  const extras = CHALLENGE_EXTRAS[lesson.id];
+  if (!extras?.length) return lesson;
+  const challengeConcept = {
+    id: `${lesson.id}-challenge`,
+    title: 'Challenge — interview-grade',
+    objective: 'Apply this lesson under exam pressure: edge cases, complexity, and distractors.',
+    miniNote: 'Optional stretch. Uses only what this lesson and earlier lessons taught.',
+    examples: extras,
+  };
+  return { ...lesson, concepts: [...lesson.concepts, challengeConcept] };
+}
 
 function mergeBuildExtras<T extends { id: string; concepts: { examples: Example[] }[] }>(
   lesson: T,

@@ -35,4 +35,13 @@ describe('content registry', () => {
       expect(new Set(ids).size).toBe(COURSE_LESSONS.length);
     }
   });
+
+  it('appends a challenge concept with 4 items to lesson 1', () => {
+    const l1 = getAllLessons()[0];
+    const challenge = l1.concepts.find((c) => c.id === 'lesson01-challenge');
+    expect(challenge, 'lesson01 challenge concept missing').toBeDefined();
+    expect(challenge!.title).toBe('Challenge — interview-grade');
+    expect(challenge!.examples).toHaveLength(4);
+    expect(challenge!.examples.filter((e) => e.type === 'codeChallenge')).toHaveLength(2);
+  });
 });
