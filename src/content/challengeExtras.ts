@@ -886,4 +886,310 @@ export const CHALLENGE_EXTRAS: Record<string, Example[]> = {
         'The exception sends control to except (prints "caught"). Its return "err" is held while finally runs (prints "done") — finally always executes before the function returns. else is skipped because an exception occurred. Back at the top level, print shows the returned "err". So: caught, done, err.',
     },
   ],
+  lesson11: [
+    {
+      id: 'l11-chal-1',
+      type: 'codeChallenge',
+      stage: 'build',
+      tags: ['oopAttrs'],
+      prompt:
+        'Write a class Basket. The constructor takes owner and stores it. Each basket must have its OWN items list, starting empty. Add an add(thing) method that appends to that basket\'s items. Two different baskets must NOT share the same list.',
+      starterCode: 'class Basket:\n    pass',
+      tests: [
+        'a = Basket("amy")\nb = Basket("bob")\na.add("apple")\nassert a.items == ["apple"]',
+        'assert b.items == []',
+        'c = Basket("cam")\nc.add("x")\nc.add("y")\nassert c.items == ["x", "y"]',
+        'assert a.items == ["apple"]',
+      ],
+      explanation:
+        'Create the list INSIDE __init__ with self.items = [], so every instance gets a fresh list bound to it. Then add appends to self.items. Because the list is per-instance, mutating one basket leaves the others untouched — c.add("x") never shows up in a.items.',
+      trapNote:
+        'Writing the list as a class attribute (class Basket: items = []) makes ONE list shared by every instance, so a.add(...) would leak into b.items. Per-instance state must be set in __init__ with self.',
+      solutionHint:
+        'def __init__(self, owner): self.owner = owner; self.items = []  /  def add(self, thing): self.items.append(thing).',
+    },
+    {
+      id: 'l11-chal-2',
+      type: 'codeChallenge',
+      stage: 'build',
+      tags: ['oopAttrs'],
+      prompt:
+        'Account has __init__(self, balance) and describe(self) returning "balance=<balance>". Write a subclass SavingsAccount that also stores a rate. Its __init__ must reuse the parent to set balance via super(), and its describe must extend the parent\'s text to "balance=<balance> rate=<rate>".',
+      starterCode:
+        'class Account:\n    def __init__(self, balance):\n        self.balance = balance\n    def describe(self):\n        return f"balance={self.balance}"\n\nclass SavingsAccount(Account):\n    pass',
+      tests: [
+        's = SavingsAccount(100, 5)\nassert s.balance == 100',
+        'assert s.rate == 5',
+        'assert s.describe() == "balance=100 rate=5"',
+        'assert Account(50).describe() == "balance=50"',
+        'assert isinstance(s, Account)',
+      ],
+      explanation:
+        'In SavingsAccount.__init__ call super().__init__(balance) to run the parent constructor (which sets self.balance), then set self.rate. In describe, call super().describe() to get "balance=100" and append " rate=5". super() reuses the parent\'s behavior instead of copying it, and isinstance(s, Account) is True because SavingsAccount inherits from Account.',
+      trapNote:
+        'Forgetting super().__init__(balance) leaves self.balance unset, so describe crashes with AttributeError. The subclass __init__ overrides the parent\'s, so the parent constructor only runs if you call it explicitly.',
+      solutionHint:
+        'def __init__(self, balance, rate): super().__init__(balance); self.rate = rate  /  def describe(self): return super().describe() + f" rate={self.rate}".',
+    },
+    {
+      id: 'l11-chal-3',
+      type: 'multipleChoice',
+      stage: 'debug',
+      tags: ['oopAttrs'],
+      prompt:
+        'What is d1.tricks after this runs?\n\nclass Dog:\n    tricks = []\n    def __init__(self, name):\n        self.name = name\n    def add_trick(self, t):\n        self.tricks.append(t)\n\nd1 = Dog("rex")\nd2 = Dog("fido")\nd1.add_trick("sit")\nd2.add_trick("roll")',
+      options: ["['sit', 'roll']", "['sit']", "['roll']", '[]'],
+      answerIndex: 0,
+      explanation:
+        'tricks is a class attribute — a single list object shared by every Dog instance. add_trick does self.tricks.append(t), which does NOT create a new instance attribute; it MUTATES the one shared list. So d1 appending "sit" and d2 appending "roll" both land in the same list, and d1.tricks is ["sit", "roll"].',
+      trapNote:
+        'self.tricks.append(...) mutates the shared class list; only an assignment like self.tricks = [...] would create a separate per-instance attribute. Mutable class attributes are shared across all instances.',
+    },
+    {
+      id: 'l11-chal-4',
+      type: 'traceSteps',
+      stage: 'stretch',
+      tags: ['oopAttrs'],
+      prompt:
+        'Trace how self.count += 1 interacts with a class attribute, then predict both printed lines.',
+      code: 'class Counter:\n    count = 0\n    def __init__(self):\n        self.count += 1\n\na = Counter()\nb = Counter()\nprint(a.count)\nprint(Counter.count)',
+      steps: [
+        {
+          line: 6,
+          vars: { 'Counter.count': '0' },
+          note: 'a = Counter(): __init__ runs self.count += 1, i.e. self.count = self.count + 1. The read finds the class attribute 0, then the assignment creates an INSTANCE attribute a.count = 1. The class attribute is untouched.',
+        },
+        {
+          line: 7,
+          vars: { 'Counter.count': '0', 'a.count': '1' },
+          note: 'b = Counter(): same thing — b.count becomes its own instance attribute 1. Counter.count is still 0.',
+        },
+        {
+          line: 8,
+          vars: { 'Counter.count': '0', 'a.count': '1', 'b.count': '1' },
+          output: '1',
+          note: 'a.count is the instance attribute, 1.',
+        },
+        {
+          line: 9,
+          vars: { 'Counter.count': '0', 'a.count': '1', 'b.count': '1' },
+          output: '0',
+          note: 'Counter.count is the class attribute, never incremented, so 0.',
+        },
+      ],
+      question: 'What are the two printed lines, in order?',
+      options: ['1 then 0', '1 then 2', '2 then 2', '1 then 1', '0 then 2'],
+      answerIndex: 0,
+      explanation:
+        'self.count += 1 expands to self.count = self.count + 1. The right side reads the class attribute (0) because the instance has none yet, but the assignment binds a NEW instance attribute on self set to 1. The class attribute Counter.count is never modified, so it stays 0. Hence a.count is 1 and Counter.count is 0. The trap answer "1 then 2" assumes the class attribute accumulates across instances.',
+    },
+  ],
+  lesson12: [
+    {
+      id: 'l12-chal-1',
+      type: 'codeChallenge',
+      stage: 'build',
+      tags: ['recursion'],
+      prompt:
+        'Write sum_to(n) RECURSIVELY (no loops): return 0 + 1 + ... + n for n >= 0. The base case is sum_to(0) == 0; every other call adds n to the sum of everything below it.',
+      starterCode: 'def sum_to(n):\n    pass',
+      tests: [
+        'assert sum_to(0) == 0',
+        'assert sum_to(1) == 1',
+        'assert sum_to(5) == 15',
+        'assert sum_to(10) == 55',
+      ],
+      explanation:
+        'Base case: if n == 0 return 0. Recursive case: return n + sum_to(n - 1). Each call peels off n and defers the rest to a smaller call, and the additions accumulate as the stack unwinds: sum_to(5) = 5 + (4 + (3 + (2 + (1 + 0)))) = 15. The n == 0 base case is what stops the recursion.',
+      trapNote:
+        'Omitting the base case (or using n == 1) means sum_to(0) recurses into negative n forever and blows the stack with RecursionError. Always return a concrete value at the smallest input.',
+      solutionHint:
+        'if n == 0: return 0  /  return n + sum_to(n - 1).',
+    },
+    {
+      id: 'l12-chal-2',
+      type: 'codeChallenge',
+      stage: 'build',
+      tags: ['recursion'],
+      prompt:
+        'Write total(items) RECURSIVELY (no loops) that sums all integers in a list that may contain nested lists. total([]) is 0. Use head/tail recursion: handle the first element (recursing into it if it is itself a list) plus total of the rest.',
+      starterCode: 'def total(items):\n    pass',
+      tests: [
+        'assert total([]) == 0',
+        'assert total([5]) == 5',
+        'assert total([1, 2, 3]) == 6',
+        'assert total([1, [2, 3], [4, [5]]]) == 15',
+        'assert total([[], [], []]) == 0',
+      ],
+      explanation:
+        'Base case: an empty list returns 0. Otherwise split into first = items[0] and rest = items[1:]. If first is a list, recurse into it; otherwise it is an int to add. Either way add total(rest): return (total(first) if isinstance(first, list) else first) + total(rest). Two base cases meet here — empty list returns 0, and a bare int is added directly — letting arbitrary nesting collapse.',
+      trapNote:
+        'isinstance(first, list) is essential: without it you would try to add a list to an int and hit TypeError. The empty-list base case [] -> 0 also handles the nested empties in [[], [], []].',
+      solutionHint:
+        'if not items: return 0  /  first, rest = items[0], items[1:]  /  head = total(first) if isinstance(first, list) else first  /  return head + total(rest).',
+    },
+    {
+      id: 'l12-chal-3',
+      type: 'multipleChoice',
+      stage: 'stretch',
+      tags: ['recursion'],
+      prompt:
+        'What is the worst-case time complexity of this function in terms of n = len(nums)?\n\ndef has_pair(nums, target):\n    for i in range(len(nums)):\n        for j in range(i + 1, len(nums)):\n            if nums[i] + nums[j] == target:\n                return True\n    return False',
+      options: ['O(n^2)', 'O(n)', 'O(n log n)', 'O(1)'],
+      answerIndex: 0,
+      explanation:
+        'Two nested loops each scan over the list. The inner loop runs n-1, then n-2, ..., down to 0 times across the outer iterations, totalling n(n-1)/2 comparisons — which grows like n^2. In the worst case (no matching pair, so it never returns early) the work is proportional to n^2, i.e. O(n^2). O(n) would require a single pass, e.g. with a set of seen values.',
+      trapNote:
+        'A nested loop where the inner bound depends on the outer index still sums to ~n^2/2 iterations. Constants and the 1/2 drop out in Big-O, leaving O(n^2), not O(n).',
+    },
+    {
+      id: 'l12-chal-4',
+      type: 'traceSteps',
+      stage: 'stretch',
+      tags: ['recursion'],
+      prompt:
+        'Trace recursive factorial and watch the value build up as the call stack unwinds.',
+      code: 'def fac(n):\n    if n == 0:\n        return 1\n    return n * fac(n - 1)\n\nprint(fac(3))',
+      steps: [
+        {
+          line: 4,
+          vars: { n: '3' },
+          note: 'fac(3): n is not 0, so it returns 3 * fac(2) — but fac(2) must be computed first.',
+        },
+        {
+          line: 4,
+          vars: { n: '2' },
+          note: 'fac(2): returns 2 * fac(1), pausing to compute fac(1).',
+        },
+        {
+          line: 4,
+          vars: { n: '1' },
+          note: 'fac(1): returns 1 * fac(0), pausing to compute fac(0).',
+        },
+        {
+          line: 3,
+          vars: { n: '0' },
+          note: 'fac(0): base case hit, returns 1. Now the stack unwinds.',
+        },
+        {
+          line: 6,
+          vars: {},
+          output: '6',
+          note: 'Unwinding: fac(1) = 1*1 = 1, fac(2) = 2*1 = 2, fac(3) = 3*2 = 6. print shows 6.',
+        },
+      ],
+      question: 'What does this program print?',
+      options: ['6', '0', '3', '1', 'RecursionError'],
+      answerIndex: 0,
+      explanation:
+        'fac(3) defers to 3 * fac(2), which defers to 2 * fac(1), which defers to 1 * fac(0). The base case fac(0) returns 1, and as the stack unwinds the multiplications resolve outward: 1, then 2, then 6. The result is 3 * 2 * 1 * 1 = 6. Without the n == 0 base case it would recurse forever and raise RecursionError.',
+    },
+  ],
+  lesson13: [
+    {
+      id: 'l13-chal-1',
+      type: 'codeChallenge',
+      stage: 'build',
+      tags: ['identity'],
+      prompt:
+        'Write analyze(a, b) that returns a tuple (equal, same_object): equal is whether a == b, and same_object is whether a is b. This separates value equality from object identity.',
+      starterCode: 'def analyze(a, b):\n    pass',
+      tests: [
+        'x = [1, 2, 3]\ny = [1, 2, 3]\nassert analyze(x, y) == (True, False)',
+        'z = x\nassert analyze(x, z) == (True, True)',
+        'assert analyze([], []) == (True, False)',
+        'assert analyze(None, None) == (True, True)',
+      ],
+      explanation:
+        'return (a == b, a is b). == compares VALUES, so two separate lists with equal contents are ==. is compares IDENTITY (same object in memory), so those two distinct lists are NOT is. When z = x aliases the same list, a is b is True. None is a singleton, so None is None is True.',
+      trapNote:
+        'Two distinct lists with equal contents are == but not is. Use is only for identity checks (most commonly x is None), and == for value comparison.',
+      solutionHint: 'return (a == b, a is b)',
+    },
+    {
+      id: 'l13-chal-2',
+      type: 'codeChallenge',
+      stage: 'build',
+      tags: ['shallowCopy'],
+      prompt:
+        'A grid is a list of lists. Write independent_copy(grid) that returns a copy you can mutate freely — appending to an inner list of the copy must NOT change the original grid. Import deepcopy from copy.',
+      starterCode: 'from copy import deepcopy\n\ndef independent_copy(grid):\n    pass',
+      tests: [
+        'original = [[1, 2], [3, 4]]\ncopy_ = independent_copy(original)\ncopy_[0].append(99)\nassert original == [[1, 2], [3, 4]]',
+        'assert copy_ == [[1, 2, 99], [3, 4]]',
+        'assert independent_copy([]) == []',
+        'g = [[0]]\nc = independent_copy(g)\nc[0][0] = 7\nassert g == [[0]]',
+      ],
+      explanation:
+        'return deepcopy(grid). deepcopy recursively copies the outer list AND every inner list, so the copy shares no objects with the original — mutating copy_[0] cannot touch original[0]. A shallow copy (grid[:] or list(grid)) copies only the outer list; the inner lists stay shared, so copy_[0].append(99) would leak into original.',
+      trapNote:
+        'grid[:] / list(grid) is a SHALLOW copy: the outer list is new but the inner lists are the same objects, so mutating an inner list shows in both. deepcopy is required for true independence of nested structures.',
+      solutionHint: 'return deepcopy(grid)',
+    },
+    {
+      id: 'l13-chal-3',
+      type: 'multipleChoice',
+      stage: 'debug',
+      tags: ['shallowCopy', 'aliasing'],
+      prompt:
+        'What is a after this runs?\n\na = [[1, 2], [3, 4]]\nb = a[:]\nb[0].append(99)',
+      options: ['[[1, 2, 99], [3, 4]]', '[[1, 2], [3, 4]]', '[[1, 2, 99], [3, 4, 99]]', 'a TypeError'],
+      answerIndex: 0,
+      explanation:
+        'a[:] makes a SHALLOW copy: b is a new outer list (so a is b is False), but b[0] is the very same inner list object as a[0]. b[0].append(99) mutates that shared inner list in place, so the change is visible through a as well — a becomes [[1, 2, 99], [3, 4]]. Only b[0] (= a[0]) is affected; a[1] is unchanged.',
+      trapNote:
+        'A slice copy duplicates only the top level. The inner lists are shared references, so mutating b[0] also mutates a[0]. deepcopy(a) would have made them independent.',
+    },
+    {
+      id: 'l13-chal-4',
+      type: 'traceSteps',
+      stage: 'stretch',
+      tags: ['identity'],
+      prompt:
+        'Trace == versus is on lists, and predict the three printed lines.',
+      code: 'a = [1, 2]\nb = [1, 2]\nc = a\nprint(a == b)\nprint(a is b)\nprint(a is c)',
+      steps: [
+        { line: 1, vars: { a: '[1, 2]' } },
+        {
+          line: 2,
+          vars: { a: '[1, 2]', b: '[1, 2]' },
+          note: 'b is a SEPARATE list object that happens to have equal contents.',
+        },
+        {
+          line: 3,
+          vars: { a: '[1, 2]', b: '[1, 2]', c: '[1, 2]' },
+          note: 'c = a does not copy; c is bound to the same object as a (an alias).',
+        },
+        {
+          line: 4,
+          vars: { a: '[1, 2]', b: '[1, 2]', c: '[1, 2]' },
+          output: 'True',
+          note: 'a == b compares values: equal contents, so True.',
+        },
+        {
+          line: 5,
+          vars: { a: '[1, 2]', b: '[1, 2]', c: '[1, 2]' },
+          output: 'False',
+          note: 'a is b compares identity: different objects, so False.',
+        },
+        {
+          line: 6,
+          vars: { a: '[1, 2]', b: '[1, 2]', c: '[1, 2]' },
+          output: 'True',
+          note: 'a is c: c is an alias of a, the same object, so True.',
+        },
+      ],
+      question: 'What are the three printed lines, in order?',
+      options: [
+        'True, False, True',
+        'True, True, True',
+        'True, False, False',
+        'False, False, True',
+        'True, True, False',
+      ],
+      answerIndex: 0,
+      explanation:
+        'a == b is True because the two lists hold equal values. a is b is False because they are distinct objects in memory despite equal contents. a is c is True because c = a binds c to the SAME object (an alias), not a copy. So the lines are True, False, True. The trap is assuming equal contents imply is (identity) — they do not.',
+    },
+  ],
 };
