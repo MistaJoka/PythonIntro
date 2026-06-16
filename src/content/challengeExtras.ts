@@ -1192,4 +1192,305 @@ export const CHALLENGE_EXTRAS: Record<string, Example[]> = {
         'a == b is True because the two lists hold equal values. a is b is False because they are distinct objects in memory despite equal contents. a is c is True because c = a binds c to the SAME object (an alias), not a copy. So the lines are True, False, True. The trap is assuming equal contents imply is (identity) — they do not.',
     },
   ],
+  lesson14: [
+    {
+      id: 'l14-chal-1',
+      type: 'codeChallenge',
+      stage: 'build',
+      tags: ['unpacking', 'offByOne'],
+      prompt:
+        'Write label_pairs(names, scores) that returns a list of strings "<rank>. <name>=<score>", numbering ranks from 1. Pair each name with its score using zip, and number with enumerate starting at 1. If the lists differ in length, only the pairs that exist are labelled.',
+      starterCode: 'def label_pairs(names, scores):\n    pass',
+      tests: [
+        'assert label_pairs(["a", "b"], [10, 20]) == ["1. a=10", "2. b=20"]',
+        'assert label_pairs(["a", "b", "c"], [10, 20]) == ["1. a=10", "2. b=20"]',
+        'assert label_pairs([], []) == []',
+        'assert label_pairs(["x"], [5, 6, 7]) == ["1. x=5"]',
+      ],
+      explanation:
+        'zip(names, scores) yields pairs and STOPS at the shorter iterable, so a trailing "c" with no score is silently dropped — only two labels come back. enumerate(..., start=1) supplies the human-friendly rank beginning at 1, and tuple unpacking (rank, (name, score)) destructures both the counter and the zipped pair in one header.',
+      trapNote:
+        'zip stops at the SHORTEST input — extra items in the longer list are dropped, not zipped with None. enumerate defaults to start=0; pass start=1 for 1-based ranks.',
+      solutionHint:
+        'result = []  /  for rank, (name, score) in enumerate(zip(names, scores), start=1): result.append(f"{rank}. {name}={score}")  /  return result.',
+    },
+    {
+      id: 'l14-chal-2',
+      type: 'codeChallenge',
+      stage: 'build',
+      tags: ['sortedKey'],
+      prompt:
+        'Write top_by_length(words) that returns a NEW list of the words ordered from longest to shortest, using sorted with a key. When two words are the same length, they must keep their original relative order (stable sort).',
+      starterCode: 'def top_by_length(words):\n    pass',
+      tests: [
+        'assert top_by_length(["bb", "a", "ccc"]) == ["ccc", "bb", "a"]',
+        'assert top_by_length(["dog", "cat", "ox"]) == ["dog", "cat", "ox"]',
+        'assert top_by_length([]) == []',
+        'assert top_by_length(["a"]) == ["a"]',
+      ],
+      explanation:
+        'return sorted(words, key=lambda w: len(w), reverse=True). The key transforms each word to its length for comparison while the words themselves are what gets returned. reverse=True flips ascending into descending. Python\'s sort is STABLE: "dog" and "cat" tie at length 3, so they stay in their input order — reverse=True reverses the comparison, NOT the tie-break order.',
+      trapNote:
+        'key=len returns the comparison value; you still get back the original words, not their lengths. Stability means equal-key items keep input order even with reverse=True.',
+      solutionHint: 'return sorted(words, key=lambda w: len(w), reverse=True)',
+    },
+    {
+      id: 'l14-chal-3',
+      type: 'multipleChoice',
+      stage: 'stretch',
+      tags: ['unpacking'],
+      prompt:
+        'What are a and rest after this runs?\n\na, *rest = [1, 2, 3, 4]',
+      options: [
+        'a = 1, rest = [2, 3, 4]',
+        'a = 1, rest = (2, 3, 4)',
+        'a = [1], rest = [2, 3, 4]',
+        'a = 1, rest = 4',
+      ],
+      answerIndex: 0,
+      explanation:
+        'Starred unpacking binds a to the first element and gathers all the remaining elements into rest. The collected part is always a LIST — rest is [2, 3, 4], even though the right-hand side could be any iterable. a itself is the plain value 1, not [1].',
+      trapNote:
+        'a, *rest = ... makes rest a list, not a tuple, and a is a single value. If there were exactly one element, rest would be the empty list [].',
+    },
+    {
+      id: 'l14-chal-4',
+      type: 'traceSteps',
+      stage: 'stretch',
+      tags: ['unpacking', 'offByOne'],
+      prompt:
+        'Trace enumerate(zip(...), start=1) over lists of different lengths and predict the output.',
+      code: 'names = ["amy", "bob", "cat"]\nages = [30, 40]\nlabels = []\nfor i, (n, age) in enumerate(zip(names, ages), start=1):\n    labels.append(f"{i}:{n}")\nprint(labels)',
+      steps: [
+        { line: 1, vars: { names: "['amy', 'bob', 'cat']" } },
+        { line: 2, vars: { names: "['amy', 'bob', 'cat']", ages: '[30, 40]' } },
+        { line: 3, vars: { names: "['amy', 'bob', 'cat']", ages: '[30, 40]', labels: '[]' } },
+        {
+          line: 5,
+          vars: { names: "['amy', 'bob', 'cat']", ages: '[30, 40]', labels: "['1:amy']", i: '1', n: "'amy'", age: '30' },
+          note: 'First pair: enumerate start=1 gives i=1, zip pairs "amy" with 30.',
+        },
+        {
+          line: 5,
+          vars: { names: "['amy', 'bob', 'cat']", ages: '[30, 40]', labels: "['1:amy', '2:bob']", i: '2', n: "'bob'", age: '40' },
+          note: 'Second pair: i=2, "bob" with 40. zip is now exhausted because ages only had 2 items — "cat" is never reached.',
+        },
+        {
+          line: 6,
+          vars: { names: "['amy', 'bob', 'cat']", ages: '[30, 40]', labels: "['1:amy', '2:bob']", i: '2', n: "'bob'", age: '40' },
+          output: "['1:amy', '2:bob']",
+        },
+      ],
+      question: 'What does this program print?',
+      options: [
+        "['1:amy', '2:bob']",
+        "['0:amy', '1:bob']",
+        "['1:amy', '2:bob', '3:cat']",
+        "['1:amy', '2:bob', '3:None']",
+        "['0:amy', '1:bob', '2:cat']",
+      ],
+      answerIndex: 0,
+      explanation:
+        'zip stops at the shorter list (ages has 2 items), so the loop runs only twice and "cat" is dropped — no third entry and no None padding. enumerate(..., start=1) numbers the pairs 1 and 2, giving ["1:amy", "2:bob"]. The trap options assume start=0 or that zip pads the missing score.',
+    },
+  ],
+  lesson15: [
+    {
+      id: 'l15-chal-1',
+      type: 'codeChallenge',
+      stage: 'build',
+      tags: ['regex'],
+      prompt:
+        'Write extract_tags(text) that returns a list of the names inside angle-bracket tags like "<a><b>" → ["a", "b"]. Use re.findall with a capture group and a NON-greedy match so each tag is captured separately.',
+      starterCode: 'import re\n\ndef extract_tags(text):\n    pass',
+      tests: [
+        'assert extract_tags("<a><b>") == ["a", "b"]',
+        'assert extract_tags("<x>text<y>") == ["x", "y"]',
+        'assert extract_tags("no tags") == []',
+        'assert extract_tags("<one>") == ["one"]',
+      ],
+      explanation:
+        'return re.findall(r"<(.*?)>", text). Two things matter. (1) findall with a capture group returns the GROUP contents, so you get "a", not "<a>". (2) The non-greedy .*? matches as little as possible, stopping at the first ">"; the greedy .* would swallow "a><b" in one match. With no tags, findall returns the empty list.',
+      trapNote:
+        'Greedy r"<(.*)>" on "<a><b>" captures "a><b" (one match spanning both tags). Non-greedy .*? stops at the nearest ">". And findall returns the GROUP, not the whole match, when a group is present.',
+      solutionHint: 'return re.findall(r"<(.*?)>", text)',
+    },
+    {
+      id: 'l15-chal-2',
+      type: 'codeChallenge',
+      stage: 'build',
+      tags: ['jsonCsv'],
+      prompt:
+        'Write split_fields(line) that parses ONE line of CSV into a list of string fields, where a field may contain a comma if it is wrapped in double quotes. Parse with csv.reader over an io.StringIO, and skip the space after each comma so " 30" becomes "30".',
+      starterCode: 'import csv, io\n\ndef split_fields(line):\n    pass',
+      tests: [
+        'assert split_fields("a, b, c") == ["a", "b", "c"]',
+        'assert split_fields(\'"Smith, Jane", 30, NY\') == ["Smith, Jane", "30", "NY"]',
+        'assert split_fields("solo") == ["solo"]',
+        'assert split_fields("x,y") == ["x", "y"]',
+      ],
+      explanation:
+        'reader = csv.reader(io.StringIO(line), skipinitialspace=True); return next(reader). The csv module understands quoting, so the quoted "Smith, Jane" stays ONE field even though it contains a comma — a naive line.split(",") would wrongly break it into "Smith" and " Jane". skipinitialspace=True trims the space right after each delimiter, and next(reader) pulls the single parsed row.',
+      trapNote:
+        'line.split(",") splits inside quoted fields too, shattering "Smith, Jane". csv.reader respects the quotes. The quotes themselves are stripped by the parser — the field value has no surrounding quote characters.',
+      solutionHint:
+        'reader = csv.reader(io.StringIO(line), skipinitialspace=True)  /  return next(reader).',
+    },
+    {
+      id: 'l15-chal-3',
+      type: 'multipleChoice',
+      stage: 'stretch',
+      tags: ['regex'],
+      prompt:
+        'What is the value of\n\nimport re\nre.findall(r"<(.*)>", "<a><b>")',
+      options: ["['a><b']", "['a', 'b']", "['<a>', '<b>']", "['a']"],
+      answerIndex: 0,
+      explanation:
+        'The .* is GREEDY: it matches as many characters as possible, so it consumes "a><b" and only backtracks to the LAST ">". The result is a single match whose captured group is "a><b". To capture each tag separately you need the non-greedy .*? which yields ["a", "b"].',
+      trapNote:
+        'Greedy .* extends to the final ">", merging both tags into one match. Add ? (making it .*?) to stop at the nearest ">".',
+    },
+    {
+      id: 'l15-chal-4',
+      type: 'traceSteps',
+      stage: 'stretch',
+      tags: ['jsonCsv'],
+      prompt:
+        'Trace how json.loads maps JSON literals to Python types, then predict both printed lines.',
+      code: "import json\ndata = json.loads('[1, 1.0, true, null]')\nfirst = data[0]\nlast = data[3]\nprint(type(first).__name__)\nprint(last)",
+      steps: [
+        {
+          line: 2,
+          vars: { data: '[1, 1.0, True, None]' },
+          note: 'json.loads maps the JSON array to a Python list: 1 → int 1, 1.0 → float 1.0, true → True, null → None.',
+        },
+        {
+          line: 3,
+          vars: { data: '[1, 1.0, True, None]', first: '1' },
+          note: 'first = data[0] is the int 1 (JSON 1 without a decimal point becomes a Python int).',
+        },
+        {
+          line: 4,
+          vars: { data: '[1, 1.0, True, None]', first: '1', last: 'None' },
+          note: 'last = data[3] is None, because JSON null maps to Python None.',
+        },
+        {
+          line: 5,
+          vars: { data: '[1, 1.0, True, None]', first: '1', last: 'None' },
+          output: 'int',
+          note: 'type(first).__name__ is "int" — JSON 1 (no decimal) decodes to int, not float.',
+        },
+        {
+          line: 6,
+          vars: { data: '[1, 1.0, True, None]', first: '1', last: 'None' },
+          output: 'None',
+          note: 'print(last) shows None (JSON null).',
+        },
+      ],
+      question: 'What are the two printed lines, in order?',
+      options: ['int then None', 'float then null', 'int then null', 'float then None', 'int then 0'],
+      answerIndex: 0,
+      explanation:
+        'json.loads decodes JSON 1 (no decimal point) to a Python int, so type(first).__name__ is "int" — a JSON number like 1.0 would have been a float. JSON null maps to Python None, and print(None) displays "None" (not the literal "null"). So the lines are int then None.',
+    },
+  ],
+  lesson16: [
+    {
+      id: 'l16-chal-1',
+      type: 'codeChallenge',
+      stage: 'build',
+      tags: ['generators'],
+      prompt:
+        'Write a generator countdown(n) that yields n, n-1, ..., down to 1 (stopping before 0). Use yield, not a returned list. Because it is a generator, iterating it a second time after it is exhausted must yield nothing.',
+      starterCode: 'def countdown(n):\n    pass',
+      tests: [
+        'assert list(countdown(3)) == [3, 2, 1]',
+        'g = countdown(2)\nassert list(g) == [2, 1]\nassert list(g) == []',
+        'assert list(countdown(0)) == []',
+        'assert list(countdown(1)) == [1]',
+      ],
+      explanation:
+        'while n > 0: yield n; n -= 1. A function with yield is a generator: calling it returns a lazy iterator that produces values on demand. Generators are ONE-SHOT — once list(g) drains it, the generator is exhausted and a second list(g) is []. countdown(0) yields nothing because the while condition is false immediately.',
+      trapNote:
+        'A generator can only be iterated ONCE. After list(g) exhausts it, list(g) again is [], not the same values. To reuse, call countdown(...) again to make a fresh generator.',
+      solutionHint:
+        'while n > 0: yield n; n -= 1.',
+    },
+    {
+      id: 'l16-chal-2',
+      type: 'codeChallenge',
+      stage: 'build',
+      tags: ['patternMatch'],
+      prompt:
+        'Write sign(n) using match/case: return "zero" for 0, "positive" when n > 0, and "negative" otherwise. Use a literal case for 0, a guarded case (case n if n > 0) for positives, and a wildcard case _ for everything else.',
+      starterCode: 'def sign(n):\n    pass',
+      tests: [
+        'assert sign(0) == "zero"',
+        'assert sign(5) == "positive"',
+        'assert sign(-3) == "negative"',
+        'assert sign(-1) == "negative"',
+      ],
+      explanation:
+        'match n: case 0 matches the literal 0; case n if n > 0 binds n and only fires when the guard is true; case _ is the wildcard catch-all for the rest (negatives). Cases are tried top-to-bottom and the first match wins, so 0 is handled before the guarded case ever sees it. The wildcard case _ guarantees every input is matched.',
+      trapNote:
+        'case _ is the wildcard (matches anything); a bare name like case n is a CAPTURE that also matches anything but binds the value. A guard (if n > 0) is what restricts a capture to a condition.',
+      solutionHint:
+        'match n:  /  case 0: return "zero"  /  case n if n > 0: return "positive"  /  case _: return "negative".',
+    },
+    {
+      id: 'l16-chal-3',
+      type: 'multipleChoice',
+      stage: 'debug',
+      tags: ['generators'],
+      prompt:
+        'What does this print?\n\ndef nums():\n    yield 1\n    yield 2\n\ng = nums()\nprint(list(g))\nprint(list(g))',
+      options: ['[1, 2] then []', '[1, 2] then [1, 2]', '[1, 2] then [2]', '[] then [1, 2]'],
+      answerIndex: 0,
+      explanation:
+        'g is a generator object created once. The first list(g) drives it to completion, producing [1, 2] and EXHAUSTING it. A generator does not rewind: the second list(g) finds nothing left to yield, so it is the empty list []. To get [1, 2] again you would need a fresh nums().',
+      trapNote:
+        'Generators are single-pass. The same generator object cannot be iterated twice — the second pass is empty, not a repeat.',
+    },
+    {
+      id: 'l16-chal-4',
+      type: 'traceSteps',
+      stage: 'stretch',
+      tags: ['generators'],
+      prompt:
+        'Trace creating a generator and draining it twice, then predict both printed lines.',
+      code: 'def gen():\n    yield 1\n    yield 2\n\ng = gen()\nfirst = list(g)\nsecond = list(g)\nprint(first)\nprint(second)',
+      steps: [
+        {
+          line: 5,
+          vars: { g: '<generator object>' },
+          note: 'gen() returns a generator object — no code inside gen has run yet (it is lazy).',
+        },
+        {
+          line: 6,
+          vars: { g: '<generator object>', first: '[1, 2]' },
+          note: 'list(g) drives the generator to completion: it yields 1, then 2, then stops. The generator is now EXHAUSTED.',
+        },
+        {
+          line: 7,
+          vars: { g: '<generator object>', first: '[1, 2]', second: '[]' },
+          note: 'list(g) again: the generator is already exhausted and yields nothing, so second is [].',
+        },
+        {
+          line: 8,
+          vars: { g: '<generator object>', first: '[1, 2]', second: '[]' },
+          output: '[1, 2]',
+        },
+        {
+          line: 9,
+          vars: { g: '<generator object>', first: '[1, 2]', second: '[]' },
+          output: '[]',
+        },
+      ],
+      question: 'What are the two printed lines, in order?',
+      options: ['[1, 2] then []', '[1, 2] then [1, 2]', '[] then [1, 2]', '[1, 2] then [2]', '[1] then [2]'],
+      answerIndex: 0,
+      explanation:
+        'The same generator object g is drained by the first list(g), yielding [1, 2] and exhausting it. Generators do not reset, so the second list(g) yields nothing and second is []. The lines are [1, 2] then []. The trap answer [1, 2] then [1, 2] assumes the generator restarts.',
+    },
+  ],
 };
