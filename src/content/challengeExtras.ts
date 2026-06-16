@@ -584,4 +584,306 @@ export const CHALLENGE_EXTRAS: Record<string, Example[]> = {
         'list.sort() mutates the list in place and returns None. So result = nums.sort() binds result to None (first line prints None), while nums itself is now sorted to [1, 2, 3] (second line). The trap is expecting result to hold the sorted list — that is what sorted(nums) would give; .sort() returns nothing.',
     },
   ],
+  lesson08: [
+    {
+      id: 'l8-chal-1',
+      type: 'codeChallenge',
+      stage: 'build',
+      tags: ['dictKeys'],
+      prompt:
+        'Write count_chars(s) that returns a dict mapping each character in s to how many times it appears. Build the counts with dict.get so a brand-new character starts at 0 instead of raising KeyError.',
+      starterCode: 'def count_chars(s):\n    pass',
+      tests: [
+        'assert count_chars("aab") == {"a": 2, "b": 1}',
+        'assert count_chars("") == {}',
+        'assert count_chars("zzz") == {"z": 3}',
+        'assert count_chars("abc") == {"a": 1, "b": 1, "c": 1}',
+      ],
+      explanation:
+        'Start counts = {}, then for each ch do counts[ch] = counts.get(ch, 0) + 1. dict.get(ch, 0) returns 0 when ch is not yet a key, avoiding the KeyError you would hit with counts[ch] on the first sighting. The empty string yields the empty dict because the loop never runs.',
+      trapNote:
+        'counts[ch] + 1 raises KeyError the first time a character is seen. dict.get(ch, 0) supplies a default instead of raising.',
+      solutionHint:
+        'counts = {}  /  for ch in s: counts[ch] = counts.get(ch, 0) + 1  /  return counts.',
+    },
+    {
+      id: 'l8-chal-2',
+      type: 'codeChallenge',
+      stage: 'build',
+      tags: ['dictKeys'],
+      prompt:
+        'Write only_in_first(a, b) that returns a sorted list of the values that appear in list a but NOT in list b, with no duplicates. Use set operations.',
+      starterCode: 'def only_in_first(a, b):\n    pass',
+      tests: [
+        'assert only_in_first([1, 2, 3], [2]) == [1, 3]',
+        'assert only_in_first([1, 1, 2], [2]) == [1]',
+        'assert only_in_first([], [1, 2]) == []',
+        'assert only_in_first([1, 2], [1, 2]) == []',
+        'assert only_in_first([3, 1, 2], []) == [1, 2, 3]',
+      ],
+      explanation:
+        'return sorted(set(a) - set(b)). The set difference set(a) - set(b) keeps the elements of a that are not in b, and converting to a set also deduplicates ([1, 1, 2] becomes {1, 2}). A set is unordered, so sorted() is required to get a stable, predictable list back.',
+      trapNote:
+        'A set has no order — returning list(set(a) - set(b)) gives an unpredictable ordering. Wrap it in sorted() for a deterministic result.',
+      solutionHint: 'return sorted(set(a) - set(b))',
+    },
+    {
+      id: 'l8-chal-3',
+      type: 'multipleChoice',
+      stage: 'debug',
+      tags: ['dictKeys'],
+      prompt:
+        'What does this print?\n\nd = {"a": 1, "b": 2}\nprint(1 in d)',
+      options: ['False', 'True', '1', 'KeyError'],
+      answerIndex: 0,
+      explanation:
+        'The in operator on a dict tests membership against the KEYS, not the values. The keys of d are "a" and "b"; the integer 1 is a value, not a key, so 1 in d is False. To test the values you would write 1 in d.values().',
+      trapNote:
+        'x in some_dict checks keys only. 1 is a value here, so it is not found — use d.values() to search values.',
+    },
+    {
+      id: 'l8-chal-4',
+      type: 'traceSteps',
+      stage: 'stretch',
+      tags: ['dictKeys'],
+      prompt: 'Trace this tally built with dict.get and predict both printed lines.',
+      code: 'scores = {}\nfor name in ["amy", "bob", "amy"]:\n    scores[name] = scores.get(name, 0) + 1\nprint(scores["amy"])\nprint(len(scores))',
+      steps: [
+        { line: 1, vars: { scores: '{}' } },
+        {
+          line: 3,
+          vars: { scores: "{'amy': 1}" },
+          note: 'name = "amy": scores.get("amy", 0) is 0 (no key yet), so scores["amy"] becomes 1.',
+        },
+        {
+          line: 3,
+          vars: { scores: "{'amy': 1, 'bob': 1}" },
+          note: 'name = "bob": new key, count starts at 0 + 1 = 1.',
+        },
+        {
+          line: 3,
+          vars: { scores: "{'amy': 2, 'bob': 1}" },
+          note: 'name = "amy" again: existing count 1, so 1 + 1 = 2.',
+        },
+        {
+          line: 4,
+          vars: { scores: "{'amy': 2, 'bob': 1}" },
+          output: '2',
+          note: 'scores["amy"] is 2.',
+        },
+        {
+          line: 5,
+          vars: { scores: "{'amy': 2, 'bob': 1}" },
+          output: '2',
+          note: 'len(scores) counts the distinct KEYS: "amy" and "bob" = 2.',
+        },
+      ],
+      question: 'What are the two printed lines, in order?',
+      options: ['2 then 2', '2 then 3', '3 then 2', '1 then 2', '2 then 1'],
+      answerIndex: 0,
+      explanation:
+        '"amy" is counted twice and "bob" once, so scores["amy"] is 2 (first line). len(scores) counts distinct keys — there are two keys, "amy" and "bob" — so the second line is 2, NOT 3. The trap answer 3 confuses the number of names processed with the number of unique keys.',
+    },
+  ],
+  lesson09: [
+    {
+      id: 'l9-chal-1',
+      type: 'codeChallenge',
+      stage: 'build',
+      tags: ['comprehension'],
+      prompt:
+        'Write squares_of_evens(nums) that returns a list of the squares of only the even numbers in nums, preserving order. Use a single list comprehension with an if filter.',
+      starterCode: 'def squares_of_evens(nums):\n    pass',
+      tests: [
+        'assert squares_of_evens([1, 2, 3, 4]) == [4, 16]',
+        'assert squares_of_evens([]) == []',
+        'assert squares_of_evens([1, 3, 5]) == []',
+        'assert squares_of_evens([0, -2]) == [0, 4]',
+      ],
+      explanation:
+        'return [n * n for n in nums if n % 2 == 0]. The if at the END of a comprehension is a FILTER — odd numbers are dropped entirely rather than mapped to something. 0 is even (0 % 2 == 0), so [0, -2] keeps both and squares them to [0, 4].',
+      trapNote:
+        'A trailing "if cond" filters items out. Do not confuse it with a leading "a if cond else b", which is a ternary that keeps every item but transforms it.',
+      solutionHint: 'return [n * n for n in nums if n % 2 == 0]',
+    },
+    {
+      id: 'l9-chal-2',
+      type: 'codeChallenge',
+      stage: 'build',
+      tags: ['comprehension', 'dictKeys'],
+      prompt:
+        'Write word_lengths(words) that returns a dict mapping each word to its length, using a dict comprehension. If a word repeats, the dict naturally keeps a single entry.',
+      starterCode: 'def word_lengths(words):\n    pass',
+      tests: [
+        'assert word_lengths(["hi", "bye"]) == {"hi": 2, "bye": 3}',
+        'assert word_lengths([]) == {}',
+        'assert word_lengths(["a", "a", "bb"]) == {"a": 1, "bb": 2}',
+        'assert word_lengths(["x"]) == {"x": 1}',
+      ],
+      explanation:
+        'return {w: len(w) for w in words}. A dict comprehension keys by w, so a repeated word like "a" simply overwrites its own identical entry — the result has one "a" key, not two. The empty list produces the empty dict.',
+      trapNote:
+        'Dict keys are unique: repeating a key in a comprehension keeps only the LAST assignment, it does not create duplicate entries.',
+      solutionHint: 'return {w: len(w) for w in words}',
+    },
+    {
+      id: 'l9-chal-3',
+      type: 'multipleChoice',
+      stage: 'stretch',
+      tags: ['comprehension'],
+      prompt:
+        'What is the value of\n\n[x if x % 2 == 0 else 0 for x in [1, 2, 3, 4]]',
+      options: ['[0, 2, 0, 4]', '[2, 4]', '[1, 0, 3, 0]', '[0, 2, 4]'],
+      answerIndex: 0,
+      explanation:
+        'The "x if cond else 0" sits BEFORE the for, so it is a ternary applied to every element — nothing is filtered out. Odd numbers become 0 and even numbers stay, giving [0, 2, 0, 4]. The trap [2, 4] is what a trailing FILTER ("for x in xs if x % 2 == 0") would produce — a different construct.',
+      trapNote:
+        'Ternary-before-for transforms every element (same length out); if-after-for filters elements away (shorter result). These two read similarly but do opposite things.',
+    },
+    {
+      id: 'l9-chal-4',
+      type: 'traceSteps',
+      stage: 'stretch',
+      tags: ['comprehension'],
+      prompt: 'Trace this nested comprehension and predict the output.',
+      code: 'pairs = [(i, j) for i in range(2) for j in range(2)]\nprint(pairs)\nprint(len(pairs))',
+      steps: [
+        {
+          line: 1,
+          vars: { pairs: '[(0, 0), (0, 1), (1, 0), (1, 1)]' },
+          note: 'The left for is the OUTER loop and the right for is the INNER loop. i=0 pairs with j=0,1; then i=1 pairs with j=0,1.',
+        },
+        {
+          line: 2,
+          vars: { pairs: '[(0, 0), (0, 1), (1, 0), (1, 1)]' },
+          output: '[(0, 0), (0, 1), (1, 0), (1, 1)]',
+        },
+        {
+          line: 3,
+          vars: { pairs: '[(0, 0), (0, 1), (1, 0), (1, 1)]' },
+          output: '4',
+        },
+      ],
+      question: 'What is the first printed line (the value of pairs)?',
+      options: [
+        '[(0, 0), (0, 1), (1, 0), (1, 1)]',
+        '[(0, 0), (1, 0), (0, 1), (1, 1)]',
+        '[(0, 0), (1, 1)]',
+        '[(0, 1), (1, 0)]',
+        '[(0, 0), (0, 1), (1, 0)]',
+      ],
+      answerIndex: 0,
+      explanation:
+        'In a nested comprehension the fors read left-to-right exactly like nested for-loops: "for i ... for j ..." means i is the outer loop and j the inner. So i runs 0 then 1, and for each i, j runs 0 then 1, producing (0,0),(0,1),(1,0),(1,1). The trap option swaps the loop order.',
+    },
+  ],
+  lesson10: [
+    {
+      id: 'l10-chal-1',
+      type: 'codeChallenge',
+      stage: 'build',
+      tags: ['exceptionType'],
+      prompt:
+        'Write safe_int(s, default) that returns int(s) when s is a valid integer string, and returns default when the conversion fails. Catch ONLY the error int() raises on bad input — do not catch everything.',
+      starterCode: 'def safe_int(s, default):\n    pass',
+      tests: [
+        'assert safe_int("42", 0) == 42',
+        'assert safe_int("x", -1) == -1',
+        'assert safe_int("  7 ", 0) == 7',
+        'assert safe_int("", 99) == 99',
+        'assert safe_int("-5", 0) == -5',
+      ],
+      explanation:
+        'Wrap return int(s) in try, and except ValueError: return default. int("x") and int("") both raise ValueError, which is the precise type to catch. Note int("  7 ") is 7 — int() strips surrounding whitespace before converting, so that input does NOT fail.',
+      trapNote:
+        'int() raises ValueError (not TypeError) on a non-numeric string. Catch ValueError specifically; a bare "except:" would also swallow unrelated bugs.',
+      solutionHint:
+        'try: return int(s)  /  except ValueError: return default.',
+    },
+    {
+      id: 'l10-chal-2',
+      type: 'codeChallenge',
+      stage: 'build',
+      tags: ['exceptionType'],
+      prompt:
+        'Write safe_div(a, b) that returns a / b, but returns None when b is 0 instead of crashing. Catch the specific exception that division by zero raises.',
+      starterCode: 'def safe_div(a, b):\n    pass',
+      tests: [
+        'assert safe_div(10, 2) == 5.0',
+        'assert safe_div(7, 0) is None',
+        'assert safe_div(0, 5) == 0.0',
+        'assert safe_div(-6, 3) == -2.0',
+      ],
+      explanation:
+        'try: return a / b, then except ZeroDivisionError: return None. Only b == 0 triggers the error; 0 / 5 is a perfectly valid 0.0 and must NOT return None — the danger is the divisor being zero, not the dividend.',
+      trapNote:
+        'It is ZeroDivisionError, a distinct type. Guarding "if b == 0" works too, but catching the wrong type (e.g. ValueError) would let the crash through.',
+      solutionHint:
+        'try: return a / b  /  except ZeroDivisionError: return None.',
+    },
+    {
+      id: 'l10-chal-3',
+      type: 'multipleChoice',
+      stage: 'debug',
+      tags: ['exceptionType', 'traceback'],
+      prompt:
+        'What does f("z") return?\n\ndef f(x):\n    try:\n        return int(x)\n    except Exception:\n        return "broad"\n    except ValueError:\n        return "specific"',
+      options: ["'broad'", "'specific'", 'a ValueError', 'None'],
+      answerIndex: 0,
+      explanation:
+        'except clauses are tried top-to-bottom and the FIRST matching one wins. int("z") raises ValueError, but except Exception is listed first and ValueError is a subclass of Exception, so the broad handler catches it and returns "broad". The specific ValueError clause below is unreachable.',
+      trapNote:
+        'Order matters: a broad except Exception placed before a specific except ValueError shadows it. Always list the most specific exceptions first.',
+    },
+    {
+      id: 'l10-chal-4',
+      type: 'traceSteps',
+      stage: 'stretch',
+      tags: ['exceptionType', 'traceback'],
+      prompt:
+        'Trace try/except/else/finally when an exception fires, and predict the order of printed lines.',
+      code: 'def run(x):\n    try:\n        y = 10 / x\n    except ZeroDivisionError:\n        print("caught")\n        return "err"\n    else:\n        print("ok")\n        return y\n    finally:\n        print("done")\n\nprint(run(0))',
+      steps: [
+        {
+          line: 3,
+          vars: { x: '0' },
+          note: '10 / 0 raises ZeroDivisionError, so the try body stops here and the matching except runs.',
+        },
+        {
+          line: 5,
+          vars: { x: '0' },
+          output: 'caught',
+          note: 'The except ZeroDivisionError block runs and prints "caught".',
+        },
+        {
+          line: 6,
+          vars: { x: '0' },
+          note: 'return "err" is staged — but finally must run before the function actually returns.',
+        },
+        {
+          line: 11,
+          vars: { x: '0' },
+          output: 'done',
+          note: 'finally ALWAYS runs, even when returning from the except. The else block is skipped because an exception occurred.',
+        },
+        {
+          line: 13,
+          vars: {},
+          output: 'err',
+          note: 'run(0) returned "err", which print displays last.',
+        },
+      ],
+      question: 'In what order are the lines printed?',
+      options: [
+        'caught, done, err',
+        'caught, err, done',
+        'ok, done, err',
+        'caught, done, ok',
+        'done, caught, err',
+      ],
+      answerIndex: 0,
+      explanation:
+        'The exception sends control to except (prints "caught"). Its return "err" is held while finally runs (prints "done") — finally always executes before the function returns. else is skipped because an exception occurred. Back at the top level, print shows the returned "err". So: caught, done, err.',
+    },
+  ],
 };
