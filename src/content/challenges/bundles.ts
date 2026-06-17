@@ -309,4 +309,234 @@ export const CHALLENGE_BUNDLES: ChallengeBundle[] = [
       },
     ],
   },
+  {
+    id: 'ch-datawrangling',
+    title: 'Data Wrangling',
+    blurb: 'Aliasing, mutating methods that return None, and the dict/set lookups that quietly betray you.',
+    theme: 'datawrangling',
+    difficulty: 2,
+    lessonRefs: ['lesson07', 'lesson08', 'lesson09'],
+    examples: [
+      {
+        id: 'ch-datawrangling-1',
+        type: 'codeChallenge',
+        stage: 'build',
+        tags: ['dictKeys', 'comprehension'],
+        prompt:
+          'Write dedupe(xs) that returns a new list with duplicates removed while preserving first-seen order. dedupe([3, 1, 3, 2, 1]) is [3, 1, 2]. The input is never mutated.',
+        starterCode: 'def dedupe(xs):\n    pass',
+        tests: [
+          'assert dedupe([3, 1, 3, 2, 1]) == [3, 1, 2]',
+          'assert dedupe([]) == []',
+          'assert dedupe([5, 5, 5]) == [5]',
+          'assert dedupe([1, 2, 3]) == [1, 2, 3]',
+        ],
+        explanation:
+          'Track a set of seen values for O(1) membership and build the result list in order: seen = set(); out = []; for x in xs: if x not in seen: seen.add(x); out.append(x). Return out.',
+        trapNote:
+          'list(set(xs)) deduplicates but LOSES order — a set is unordered, so [3, 1, 3, 2, 1] could come back as [1, 2, 3]. The first-seen-order test would fail.',
+        solutionHint: 'Keep a set of values already emitted; append each value the first time you meet it.',
+      },
+      {
+        id: 'ch-datawrangling-2',
+        type: 'codeChallenge',
+        stage: 'build',
+        tags: ['dictKeys'],
+        prompt:
+          'Write word_counts(text) that returns a dict mapping each whitespace-separated word to how many times it appears. word_counts("a b a c b a") is {"a": 3, "b": 2, "c": 1}. An empty string yields {}.',
+        starterCode: 'def word_counts(text):\n    pass',
+        tests: [
+          'assert word_counts("a b a c b a") == {"a": 3, "b": 2, "c": 1}',
+          'assert word_counts("") == {}',
+          'assert word_counts("hi") == {"hi": 1}',
+          'assert word_counts("x x") == {"x": 2}',
+        ],
+        explanation:
+          'counts = {}; for w in text.split(): counts[w] = counts.get(w, 0) + 1; return counts. .get(w, 0) supplies a 0 default the first time a word is seen so the += never hits a missing key.',
+        trapNote:
+          'counts[w] = counts[w] + 1 raises KeyError on the first occurrence of each word — the key does not exist yet. Use counts.get(w, 0) (or setdefault) to seed it.',
+        solutionHint: 'Split on whitespace and increment counts.get(word, 0) for each word.',
+      },
+      {
+        id: 'ch-datawrangling-3',
+        type: 'multipleChoice',
+        stage: 'stretch',
+        tags: ['aliasing', 'mutation', 'shallowCopy'],
+        prompt:
+          'What does this print?\n\na = [1, 2, 3]\nb = a\nc = a[:]\na.append(4)\nprint(b, c)',
+        options: [
+          '[1, 2, 3, 4] [1, 2, 3]',
+          '[1, 2, 3] [1, 2, 3]',
+          '[1, 2, 3, 4] [1, 2, 3, 4]',
+          '[1, 2, 3] [1, 2, 3, 4]',
+        ],
+        answerIndex: 0,
+        explanation:
+          'b = a binds b to the SAME list object, so a.append(4) is visible through b → [1, 2, 3, 4]. c = a[:] makes a shallow copy, an independent list, so c stays [1, 2, 3].',
+        trapNote:
+          'Assignment never copies a list — it aliases. Only a[:] (or list(a) / a.copy()) produces a separate object that mutations to a leave untouched.',
+      },
+      {
+        id: 'ch-datawrangling-4',
+        type: 'multipleChoice',
+        stage: 'stretch',
+        tags: ['mutation'],
+        prompt:
+          'What is the value of result?\n\nnums = [3, 1, 2]\nresult = nums.sort()',
+        options: ['None', '[1, 2, 3]', '[3, 1, 2]', '[3, 2, 1]'],
+        answerIndex: 0,
+        explanation:
+          'list.sort() sorts the list IN PLACE and returns None. nums itself becomes [1, 2, 3], but the return value assigned to result is None. Use sorted(nums) for a value you can assign.',
+        trapNote:
+          '.sort(), .append(), .reverse(), and .extend() all mutate in place and return None — assigning their result captures None, not the list.',
+      },
+      {
+        id: 'ch-datawrangling-5',
+        type: 'traceSteps',
+        stage: 'stretch',
+        tags: ['aliasing', 'shallowCopy', 'mutation'],
+        prompt: 'Trace which names share a list and which is an independent copy.',
+        code: 'a = [1, 2]\nb = a\nc = a[:]\na.append(3)\n\nresult = (b, c)',
+        steps: [
+          { line: 1, vars: { a: '[1, 2]' } },
+          { line: 2, vars: { a: '[1, 2]', b: '[1, 2]' }, note: 'b aliases a (same object)' },
+          { line: 3, vars: { a: '[1, 2]', b: '[1, 2]', c: '[1, 2]' }, note: 'c is a fresh copy' },
+          {
+            line: 4,
+            vars: { a: '[1, 2, 3]', b: '[1, 2, 3]', c: '[1, 2]' },
+            note: 'append mutates the shared object — b sees it, c does not',
+          },
+          { line: 6, vars: { a: '[1, 2, 3]', b: '[1, 2, 3]', c: '[1, 2]', result: '([1, 2, 3], [1, 2])' } },
+        ],
+        question: 'What is result?',
+        options: [
+          '([1, 2, 3], [1, 2])',
+          '([1, 2, 3], [1, 2, 3])',
+          '([1, 2], [1, 2])',
+          '([1, 2], [1, 2, 3])',
+        ],
+        answerIndex: 0,
+        explanation:
+          'b = a aliases the same list, so a.append(3) makes b [1, 2, 3]. c = a[:] copied the list before the append, so c stays [1, 2]. result pairs them: ([1, 2, 3], [1, 2]).',
+      },
+    ],
+  },
+  {
+    id: 'ch-idioms',
+    title: 'Idioms & Iteration',
+    blurb: 'enumerate offsets, zip truncation, sort stability, star-unpacking, and type hints that runtime ignores.',
+    theme: 'idioms',
+    difficulty: 2,
+    lessonRefs: ['lesson14', 'lesson16'],
+    examples: [
+      {
+        id: 'ch-idioms-1',
+        type: 'codeChallenge',
+        stage: 'build',
+        tags: ['comprehension'],
+        prompt:
+          'Write numbered(items) that returns a list of "N. item" strings, numbering from 1. numbered(["apple", "pear"]) is ["1. apple", "2. pear"]. An empty list yields [].',
+        starterCode: 'def numbered(items):\n    pass',
+        tests: [
+          'assert numbered(["apple", "pear"]) == ["1. apple", "2. pear"]',
+          'assert numbered([]) == []',
+          'assert numbered(["solo"]) == ["1. solo"]',
+          'assert numbered(["a", "b", "c"]) == ["1. a", "2. b", "3. c"]',
+        ],
+        explanation:
+          'Use enumerate with a start offset: [f"{i}. {item}" for i, item in enumerate(items, start=1)]. The start=1 makes the counter begin at 1 instead of the default 0.',
+        trapNote:
+          'enumerate(items) starts at 0, so the first label would be "0. apple". Pass start=1 (or add 1 to the index) to number from one.',
+        solutionHint: 'enumerate(items, start=1) gives 1-based (index, value) pairs to format.',
+      },
+      {
+        id: 'ch-idioms-2',
+        type: 'codeChallenge',
+        stage: 'build',
+        tags: ['unpacking'],
+        prompt:
+          'Write pair_up(names, scores) returning a list of "name=score" strings, one per matched pair. The lists may differ in length — stop at the shorter one. pair_up(["a", "b", "c"], [1, 2]) is ["a=1", "b=2"].',
+        starterCode: 'def pair_up(names, scores):\n    pass',
+        tests: [
+          'assert pair_up(["a", "b", "c"], [1, 2]) == ["a=1", "b=2"]',
+          'assert pair_up([], [1, 2, 3]) == []',
+          'assert pair_up(["x"], [9]) == ["x=9"]',
+          'assert pair_up(["a", "b"], [1, 2, 3, 4]) == ["a=1", "b=2"]',
+        ],
+        explanation:
+          'zip pairs the lists element-by-element and stops at the shorter one automatically: [f"{n}={s}" for n, s in zip(names, scores)]. No manual length check is needed.',
+        trapNote:
+          'Indexing with range(len(names)) crashes (IndexError) when scores is shorter, and range(len(scores)) would mis-pair when names is shorter. zip truncates to the shortest, sidestepping both.',
+        solutionHint: 'zip(names, scores) yields pairs only up to the shorter list — format each pair.',
+      },
+      {
+        id: 'ch-idioms-3',
+        type: 'multipleChoice',
+        stage: 'stretch',
+        tags: ['sortedKey'],
+        prompt:
+          'What does this produce?\n\ndata = [("a", 2), ("b", 1), ("c", 2)]\nsorted(data, key=lambda t: t[1], reverse=True)',
+        options: [
+          "[('a', 2), ('c', 2), ('b', 1)]",
+          "[('c', 2), ('a', 2), ('b', 1)]",
+          "[('b', 1), ('a', 2), ('c', 2)]",
+          "[('a', 2), ('b', 1), ('c', 2)]",
+        ],
+        answerIndex: 0,
+        explanation:
+          'Sorting by t[1] descending puts both score-2 tuples ahead of the score-1 tuple. Python sort is STABLE, so among equal keys ("a", 2) and ("c", 2) keep their original relative order — a before c.',
+        trapNote:
+          'reverse=True does NOT reverse ties — stability is preserved first, then the key order is flipped. ("a", 2) stays before ("c", 2) because it came first in the input.',
+      },
+      {
+        id: 'ch-idioms-4',
+        type: 'multipleChoice',
+        stage: 'stretch',
+        tags: ['typeHints'],
+        prompt:
+          'What happens when this runs?\n\ndef add(a: int, b: int) -> int:\n    return a + b\n\nprint(add("x", "y"))',
+        options: [
+          'Prints xy',
+          'Raises TypeError because the arguments are not ints',
+          'Prints 0',
+          'Raises a SyntaxError on the annotations',
+        ],
+        answerIndex: 0,
+        explanation:
+          'Type hints are annotations only — CPython does not enforce them at runtime. add("x", "y") runs "x" + "y", ordinary string concatenation, and prints xy. A separate tool like mypy would flag it statically.',
+        trapNote:
+          'Annotations document intent; they do not coerce or validate. The body executes exactly as if the hints were absent.',
+      },
+      {
+        id: 'ch-idioms-5',
+        type: 'traceSteps',
+        stage: 'stretch',
+        tags: ['unpacking'],
+        prompt: 'Trace the starred unpacking. Remember the starred name collects a LIST.',
+        code: 'nums = [10, 20, 30, 40]\nfirst, *middle, last = nums\n\ncount = len(middle)',
+        steps: [
+          { line: 1, vars: { nums: '[10, 20, 30, 40]' } },
+          {
+            line: 2,
+            vars: { nums: '[10, 20, 30, 40]', first: '10', middle: '[20, 30]', last: '40' },
+            note: 'first and last take the ends; *middle absorbs the rest as a list',
+          },
+          {
+            line: 4,
+            vars: { nums: '[10, 20, 30, 40]', first: '10', middle: '[20, 30]', last: '40', count: '2' },
+          },
+        ],
+        question: 'What are middle and count?',
+        options: [
+          'middle is [20, 30] and count is 2',
+          'middle is (20, 30) and count is 2',
+          'middle is 20 and count is 1',
+          'middle is [20, 30, 40] and count is 3',
+        ],
+        answerIndex: 0,
+        explanation:
+          'first binds 10 and last binds 40; *middle gathers everything in between as a LIST, [20, 30]. len([20, 30]) is 2, so count is 2. A starred target always produces a list, even from a tuple source.',
+      },
+    ],
+  },
 ];
