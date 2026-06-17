@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { to: '/review', label: 'SRS', glyph: '↻', end: false },
   { to: '/capstones', label: 'Dev', glyph: '◆', end: false },
   { to: '/exam-prep', label: 'Test', glyph: '◎', end: false },
+  { to: '/challenges', label: 'Arena', glyph: '✦', end: false },
   { to: '/dashboard', label: 'Log', glyph: '▣', end: false },
 ] as const;
 

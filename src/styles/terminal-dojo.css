@@ -3996,3 +3996,14 @@ button {
   line-height: 1.45;
   color: var(--text);
 }
+
+.challenge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
+.challenge-card { display: flex; gap: 0.75rem; padding: 1rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); text-decoration: none; color: inherit; transition: border-color 0.15s; }
+.challenge-card:hover { border-color: var(--cyan); text-decoration: none; }
+.challenge-badge { font-weight: 700; align-self: flex-start; padding: 0.1rem 0.5rem; border-radius: 4px; border: 1px solid currentColor; }
+.challenge-badge.difficulty-1 { color: #8fd6a6; }
+.challenge-badge.difficulty-2 { color: #d6c98f; }
+.challenge-badge.difficulty-3 { color: #d68f8f; }
+.challenge-card-body h2 { margin: 0 0 0.25rem; font-size: 1.05rem; }
+.challenge-card-body p { margin: 0 0 0.5rem; font-size: 0.9rem; color: var(--text-muted); }
+.challenge-meta { display: flex; gap: 0.75rem; opacity: 0.75; font-size: 0.85em; margin-top: 0.4rem; }

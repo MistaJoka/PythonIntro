@@ -12,6 +12,8 @@ import { ReviewSheetPage } from './routes/ExamPrep/ReviewSheet';
 import { PracticePage } from './routes/Practice';
 import { CapstoneHomePage } from './routes/Capstones/CapstoneHome';
 import { CapstoneProjectPage } from './routes/Capstones/CapstoneProject';
+import { ChallengeHomePage } from './routes/Challenges/ChallengeHome';
+import { ChallengeBundlePage } from './routes/Challenges/ChallengeBundlePage';
 
 export default function App() {
   return (
@@ -28,6 +30,8 @@ export default function App() {
           <Route path="exam-prep/diagnostic" element={<DiagnosticPage />} />
           <Route path="exam-prep/sim/:examSetId" element={<ExamSimPage />} />
           <Route path="exam-prep/review/:examSetId" element={<ReviewSheetPage />} />
+          <Route path="challenges" element={<ChallengeHomePage />} />
+          <Route path="challenges/:bundleId" element={<ChallengeBundlePage />} />
           <Route path="capstones" element={<CapstoneHomePage />} />
           <Route path="capstones/:projectId" element={<CapstoneProjectPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />

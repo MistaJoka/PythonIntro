@@ -6,6 +6,7 @@ const NAV_BY_PATH: Record<string, { glyph: string; label: string }> = {
   '/review': { glyph: '↻', label: 'Review' },
   '/capstones': { glyph: '◆', label: 'Capstones' },
   '/exam-prep': { glyph: '◉', label: 'Exam' },
+  '/challenges': { glyph: '✦', label: 'Challenges' },
   '/dashboard': { glyph: '▣', label: 'Telemetry' },
 };
 
@@ -32,6 +33,10 @@ export function getRailLocus(pathname: string, lessonId?: string): RailLocus {
 
   if (pathname.startsWith('/capstones/')) {
     return { glyph: '◆', label: 'Capstone workspace', shortLabel: 'Capstone', kind: 'capstone' };
+  }
+
+  if (pathname.startsWith('/challenges/')) {
+    return { glyph: '✦', label: 'Challenge bundle', shortLabel: 'Challenge', kind: 'nav' };
   }
 
   const nav = NAV_BY_PATH[pathname];
