@@ -21,7 +21,7 @@ export const challengeBundleSchema = z.object({
   theme: z.enum(CHALLENGE_THEMES),
   difficulty: z.union([z.literal(1), z.literal(2), z.literal(3)]),
   lessonRefs: z.array(z.string()).min(1),
-  examples: z.array(exampleSchema).min(1),
+  examples: z.array(exampleSchema).min(4),
 });
 
 export type ChallengeBundle = z.infer<typeof challengeBundleSchema>;

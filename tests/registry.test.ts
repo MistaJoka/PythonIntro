@@ -6,6 +6,7 @@ import {
   getCapstoneCount,
   getExampleById,
   CAPSTONE_PROJECTS,
+  EXAM_SETS,
 } from '../src/content/registry';
 import { getChallengeBundles } from '../src/content/registry';
 import { COURSE_LESSONS } from '../src/content/capstones/lessonIndex';
@@ -86,9 +87,15 @@ describe('content registry', () => {
   });
 
   it('challenge bundles satisfy the item contract and have unique ids', () => {
+    // Seed from every other example pool (lessons + lesson-challenges + exams) so a
+    // bundle id can never collide with — and be shadowed by — an existing example id.
     const seen = new Set<string>();
     for (const ex of getAllExamples()) seen.add(ex.id);
+    for (const exam of EXAM_SETS) for (const q of exam.questions) seen.add(q.id);
+    const themes = new Set<string>();
     for (const b of getChallengeBundles()) {
+      expect(themes.has(b.theme), `duplicate theme ${b.theme}`).toBe(false);
+      themes.add(b.theme);
       expect(b.examples.length, `${b.id} item count`).toBeGreaterThanOrEqual(4);
       const code = b.examples.filter((e) => e.type === 'codeChallenge');
       const reasoning = b.examples.filter((e) => e.type !== 'codeChallenge');
