@@ -541,4 +541,332 @@ export const CHALLENGE_BUNDLES: ChallengeBundle[] = [
       },
     ],
   },
+  {
+    id: 'ch-objects',
+    title: 'Objects & State',
+    blurb: 'Shared mutable class attributes, super() chains, and the is/== identity gap that copies hide.',
+    theme: 'objects',
+    difficulty: 2,
+    lessonRefs: ['lesson11', 'lesson13'],
+    examples: [
+      {
+        id: 'ch-objects-1',
+        type: 'codeChallenge',
+        stage: 'build',
+        tags: ['oopAttrs', 'mutation'],
+        prompt:
+          'Write a Cart class with an add(item) method and an items list that is PER INSTANCE. Two carts must never share their items. Cart() starts empty; after a.add("x"), a.items is ["x"] but a fresh Cart().items is still [].',
+        starterCode: 'class Cart:\n    pass',
+        tests: [
+          'a = Cart()',
+          'b = Cart()',
+          'a.add("x")',
+          'assert a.items == ["x"]',
+          'assert b.items == []',
+          'c = Cart()',
+          'c.add("y")',
+          'c.add("z")',
+          'assert c.items == ["y", "z"]',
+          'assert a.items == ["x"]',
+        ],
+        explanation:
+          'Initialise the list inside __init__ so each instance gets its own: class Cart: def __init__(self): self.items = []; def add(self, x): self.items.append(x). Per-instance state lives in __init__, not the class body.',
+        trapNote:
+          'Declaring items = [] in the class body (class Cart: items = []) makes ONE list shared by every instance — a.add("x") would also show up in b.items. Always build mutable state in __init__.',
+        solutionHint: 'Create self.items = [] in __init__; append in add. Do not put items = [] in the class body.',
+      },
+      {
+        id: 'ch-objects-2',
+        type: 'codeChallenge',
+        stage: 'build',
+        tags: ['oopAttrs'],
+        prompt:
+          'Define Account(owner) with self.owner, self.balance = 0, and describe() returning "owner: balance". Then SavingsAccount(owner, rate) must subclass it, call super().__init__ to reuse the owner/balance setup, store self.rate, and OVERRIDE describe() to return "owner: balance @ rate" by reusing super().describe().',
+        starterCode:
+          'class Account:\n    pass\n\nclass SavingsAccount(Account):\n    pass',
+        tests: [
+          's = SavingsAccount("Ann", 5)',
+          'assert s.owner == "Ann"',
+          'assert s.balance == 0',
+          'assert s.rate == 5',
+          'assert s.describe() == "Ann: 0 @ 5"',
+          'a = Account("Bob")',
+          'assert a.describe() == "Bob: 0"',
+        ],
+        explanation:
+          'SavingsAccount.__init__ calls super().__init__(owner) to set owner and balance, then self.rate = rate. Its describe() returns f"{super().describe()} @ {self.rate}", reusing the parent string instead of rebuilding it.',
+        trapNote:
+          'Forgetting super().__init__(owner) leaves the SavingsAccount with no owner/balance, so s.balance raises AttributeError. And not overriding describe() (or rebuilding it from scratch) breaks the "@ rate" suffix.',
+        solutionHint: 'In the subclass __init__ call super().__init__(owner), set self.rate, and have describe() wrap super().describe().',
+      },
+      {
+        id: 'ch-objects-3',
+        type: 'multipleChoice',
+        stage: 'stretch',
+        tags: ['identity'],
+        prompt:
+          'What does this print?\n\nx = [1, 2, 3]\ny = [1, 2, 3]\nz = x\nprint(x == y, x is y, x is z)',
+        options: [
+          'True False True',
+          'True True True',
+          'False False True',
+          'True True False',
+        ],
+        answerIndex: 0,
+        explanation:
+          'x == y compares VALUES, and both lists hold [1, 2, 3], so it is True. x is y compares IDENTITY — they are two separate objects, so it is False. z = x binds the same object, so x is z is True.',
+        trapNote:
+          '== asks "equal contents?"; is asks "same object?". Two independently built equal lists are == but not is. Use is only for None/identity, never to compare values.',
+      },
+      {
+        id: 'ch-objects-4',
+        type: 'traceSteps',
+        stage: 'stretch',
+        tags: ['oopAttrs', 'mutation'],
+        prompt: 'Trace a class-level mutable attribute as two instances are created and one mutates it.',
+        code: 'class Team:\n    members = []\n\n    def __init__(self, name):\n        self.name = name\n\nt1 = Team("A")\nt2 = Team("B")\nt1.members.append("zed")',
+        steps: [
+          { line: 7, vars: { 't1.members': '[]' }, note: 'Team.members is a single class-level list' },
+          { line: 8, vars: { 't1.members': '[]', 't2.members': '[]' }, note: 't2 shares the same list object' },
+          {
+            line: 9,
+            vars: { 't1.members': "['zed']", 't2.members': "['zed']" },
+            note: 't1.members IS t2.members IS Team.members — appending shows through all',
+          },
+        ],
+        question: 'After the append, what are t1.members and t2.members?',
+        options: [
+          "both ['zed']",
+          "t1.members is ['zed'], t2.members is []",
+          "both []",
+          "t1.members is ['zed'], t2.members raises AttributeError",
+        ],
+        answerIndex: 0,
+        explanation:
+          'members is defined in the class body, so it is ONE list shared by every instance. t1.members.append("zed") MUTATES that shared list in place (it never rebinds the attribute), so t1.members, t2.members, and Team.members are all the same object showing ["zed"].',
+      },
+      {
+        id: 'ch-objects-5',
+        type: 'multipleChoice',
+        stage: 'stretch',
+        tags: ['shallowCopy', 'aliasing'],
+        prompt:
+          'What does this print?\n\nimport copy\norig = [[1, 2], [3, 4]]\nshallow = copy.copy(orig)\ndeep = copy.deepcopy(orig)\norig[0].append(9)\nprint(shallow, deep)',
+        options: [
+          '[[1, 2, 9], [3, 4]] [[1, 2], [3, 4]]',
+          '[[1, 2], [3, 4]] [[1, 2], [3, 4]]',
+          '[[1, 2, 9], [3, 4]] [[1, 2, 9], [3, 4]]',
+          '[[1, 2], [3, 4]] [[1, 2, 9], [3, 4]]',
+        ],
+        answerIndex: 0,
+        explanation:
+          'copy.copy makes a SHALLOW copy: a new outer list whose inner lists are the SAME objects as orig. So orig[0].append(9) is visible through shallow → [[1, 2, 9], [3, 4]]. deepcopy clones every level, so deep is fully independent and stays [[1, 2], [3, 4]].',
+        trapNote:
+          'Shallow copies (copy.copy, orig[:], list(orig)) duplicate only the top level; nested objects stay shared. Mutating a nested element leaks into the copy. Use copy.deepcopy for true independence of nested structures.',
+      },
+    ],
+  },
+  {
+    id: 'ch-recursion',
+    title: 'Recursion & Structure',
+    blurb: 'Base cases, head/tail decomposition over nested lists, and reading complexity straight off the call tree.',
+    theme: 'recursion',
+    difficulty: 3,
+    lessonRefs: ['lesson12', 'lesson07'],
+    examples: [
+      {
+        id: 'ch-recursion-1',
+        type: 'codeChallenge',
+        stage: 'build',
+        tags: ['recursion'],
+        prompt:
+          'Write deep_sum(xs) that returns the sum of every number in an arbitrarily NESTED list, using recursion (no loops). deep_sum([1, [2, 3], [4, [5]]]) is 15. An empty list (at any depth) contributes 0.',
+        starterCode: 'def deep_sum(xs):\n    pass',
+        tests: [
+          'assert deep_sum([1, 2, 3]) == 6',
+          'assert deep_sum([1, [2, 3], [4, [5]]]) == 15',
+          'assert deep_sum([]) == 0',
+          'assert deep_sum([[], [[]]]) == 0',
+          'assert deep_sum([[1], [2], [3]]) == 6',
+        ],
+        explanation:
+          'Decompose head/tail: if xs == [] return 0 (base case). Otherwise look at head = xs[0] — if it is a list, recurse into it; either way add the recursive sum of the tail xs[1:]. So: return (deep_sum(head) if isinstance(head, list) else head) + deep_sum(xs[1:]).',
+        trapNote:
+          'The empty-list base case must return 0, not raise. Forgetting the isinstance check tries to add a list to an int (TypeError) on nested input; forgetting the tail recursion only ever sees the first element.',
+        solutionHint: 'Base case: empty list → 0. Recurse into a list head, otherwise add the bare value, then recurse on the tail xs[1:].',
+      },
+      {
+        id: 'ch-recursion-2',
+        type: 'codeChallenge',
+        stage: 'build',
+        tags: ['recursion'],
+        prompt:
+          'Write flatten(xs) that returns a single flat list with every value from an arbitrarily NESTED list, in order, using recursion (no loops). flatten([1, [2, [3, 4]], 5]) is [1, 2, 3, 4, 5]. flatten([]) is [].',
+        starterCode: 'def flatten(xs):\n    pass',
+        tests: [
+          'assert flatten([1, [2, [3, 4]], 5]) == [1, 2, 3, 4, 5]',
+          'assert flatten([]) == []',
+          'assert flatten([[], [1], []]) == [1]',
+          'assert flatten([1, 2, 3]) == [1, 2, 3]',
+          'assert flatten([[[[7]]]]) == [7]',
+        ],
+        explanation:
+          'Base case: flatten([]) == []. Otherwise split head = xs[0]: if head is a list, flatten(head) + flatten(xs[1:]); else [head] + flatten(xs[1:]). Concatenating the recursive results preserves order.',
+        trapNote:
+          'Wrapping a list head as [head] (instead of recursing into it) leaves nesting behind — flatten([[1]]) would give [[1]]. The base case [] must return [], and deeply nested [[[[7]]]] must still collapse to [7].',
+        solutionHint: 'Empty → []. If the head is a list, flatten it; otherwise wrap it as [head]; then concatenate with flatten of the tail.',
+      },
+      {
+        id: 'ch-recursion-3',
+        type: 'multipleChoice',
+        stage: 'stretch',
+        tags: ['recursion'],
+        prompt:
+          'What is the time complexity of count_down in terms of n?\n\ndef count_down(n):\n    if n == 0:\n        return 0\n    return 1 + count_down(n - 1)',
+        options: ['O(n)', 'O(n^2)', 'O(log n)', 'O(1)'],
+        answerIndex: 0,
+        explanation:
+          'Each call does O(1) work and makes exactly ONE recursive call with n decreased by 1, so the chain has n + 1 calls total: O(n). It would be O(log n) only if n were halved each step, and O(n^2) only if each call did O(n) work or branched.',
+        trapNote:
+          'Single recursion that decrements by a constant is linear. Halving (n // 2) gives O(log n); two recursive calls per level give O(2^n); slicing xs[1:] each call (O(n) copy) would push it to O(n^2).',
+      },
+      {
+        id: 'ch-recursion-4',
+        type: 'traceSteps',
+        stage: 'stretch',
+        tags: ['recursion'],
+        prompt: 'Trace the recursive calls of factorial as the stack unwinds for fact(3).',
+        code: 'def fact(n):\n    if n == 0:\n        return 1\n    return n * fact(n - 1)\n\nresult = fact(3)',
+        steps: [
+          { line: 4, vars: { n: '3' }, note: 'fact(3) calls fact(2) before it can multiply' },
+          { line: 4, vars: { n: '2' }, note: 'fact(2) calls fact(1)' },
+          { line: 4, vars: { n: '1' }, note: 'fact(1) calls fact(0)' },
+          { line: 3, vars: { n: '0' }, note: 'base case: fact(0) returns 1' },
+          { line: 6, vars: { result: '6' }, note: 'unwinds: 1*1 → 2*1 → 3*2 = 6' },
+        ],
+        question: 'What is result?',
+        options: ['6', '3', '1', '0'],
+        answerIndex: 0,
+        explanation:
+          'fact(3) = 3 * fact(2) = 3 * (2 * fact(1)) = 3 * (2 * (1 * fact(0))) = 3 * 2 * 1 * 1 = 6. The base case fact(0) returns 1, and the products multiply back up as the stack unwinds.',
+      },
+      {
+        id: 'ch-recursion-5',
+        type: 'multipleChoice',
+        stage: 'stretch',
+        tags: ['recursion'],
+        prompt:
+          'What does mystery(5) return?\n\ndef mystery(n):\n    if n <= 0:\n        return 0\n    return n + mystery(n - 2)',
+        options: ['9', '15', '8', 'It recurses forever (RecursionError)'],
+        answerIndex: 0,
+        explanation:
+          'The step is n - 2, so the values added are 5, 3, 1, then mystery(-1) hits the base case (n <= 0) and returns 0. 5 + 3 + 1 = 9.',
+        trapNote:
+          '15 would be 1+2+3+4+5 (a step of 1). It does NOT recurse forever: although n never equals exactly 0 from an odd start, the base case is n <= 0, which -1 satisfies. A base of n == 0 WOULD overshoot to RecursionError here.',
+      },
+    ],
+  },
+  {
+    id: 'ch-errors',
+    title: 'Errors & Edge Cases',
+    blurb: 'except-clause order, the else/finally dance, matching the exact exception type, and safe defaults.',
+    theme: 'errors',
+    difficulty: 3,
+    lessonRefs: ['lesson10', 'lesson05'],
+    examples: [
+      {
+        id: 'ch-errors-1',
+        type: 'codeChallenge',
+        stage: 'build',
+        tags: ['exceptionType'],
+        prompt:
+          'Write safe_int(s, default=0) that returns int(s) when possible, otherwise returns default. It must catch BAD strings ("oops", "3.5") and non-strings (None) without crashing. safe_int("42") is 42; safe_int("oops") is 0; safe_int("oops", -1) is -1.',
+        starterCode: 'def safe_int(s, default=0):\n    pass',
+        tests: [
+          'assert safe_int("42") == 42',
+          'assert safe_int("oops") == 0',
+          'assert safe_int("oops", -1) == -1',
+          'assert safe_int("  7 ") == 7',
+          'assert safe_int(None) == 0',
+          'assert safe_int("3.5") == 0',
+        ],
+        explanation:
+          'Wrap the conversion: try: return int(s) except (ValueError, TypeError): return default. int() already strips surrounding whitespace ("  7 " → 7). ValueError covers bad text and "3.5"; TypeError covers None.',
+        trapNote:
+          'Catching only ValueError lets safe_int(None) crash with TypeError. And int("3.5") raises ValueError (it is not a valid int literal), so a float-first approach like int(float(s)) would WRONGLY return 3 instead of the default.',
+        solutionHint: 'try int(s); on (ValueError, TypeError) return default. Do not convert via float first.',
+      },
+      {
+        id: 'ch-errors-2',
+        type: 'codeChallenge',
+        stage: 'build',
+        tags: ['exceptionType', 'traceback'],
+        prompt:
+          'Write safe_divide(a, b) returning a tuple (result, log). Use try/except/else/finally: on success result is a / b and log records "ok"; on division by zero result is None and log records "error"; finally always records "done". safe_divide(10, 2) is (5.0, ["ok", "done"]); safe_divide(10, 0) is (None, ["error", "done"]).',
+        starterCode: 'def safe_divide(a, b):\n    pass',
+        tests: [
+          'assert safe_divide(10, 2) == (5.0, ["ok", "done"])',
+          'assert safe_divide(10, 0) == (None, ["error", "done"])',
+          'assert safe_divide(0, 5) == (0.0, ["ok", "done"])',
+        ],
+        explanation:
+          'Build a log list. try: result = a / b; except ZeroDivisionError: log.append("error"); result = None; else: log.append("ok"); finally: log.append("done"). else runs only when no exception fired; finally runs every time. Return (result, log).',
+        trapNote:
+          'Putting the "ok" append inside the try (after the division) works only by luck; the point of else is that it runs ONLY when the try succeeds. "done" must come from finally so it appears on both the success and error paths.',
+        solutionHint: 'Append "ok" in else, "error" in except (with result=None), "done" in finally; return (result, log).',
+      },
+      {
+        id: 'ch-errors-3',
+        type: 'multipleChoice',
+        stage: 'stretch',
+        tags: ['exceptionType'],
+        prompt:
+          'What does classify(0) return?\n\ndef classify(x):\n    try:\n        return 10 / x\n    except Exception:\n        return "broad"\n    except ZeroDivisionError:\n        return "zero"',
+        options: ['"broad"', '"zero"', 'It raises ZeroDivisionError', 'It raises a SyntaxError'],
+        answerIndex: 0,
+        explanation:
+          'except clauses are tried top to bottom and the FIRST matching one wins. ZeroDivisionError is a subclass of Exception, so the broad except Exception catches it first and returns "broad". The specific except ZeroDivisionError below is unreachable.',
+        trapNote:
+          'Order matters: put SPECIFIC exceptions before broad ones. A leading except Exception (or bare except) shadows every more-specific handler under it. Python does not raise a SyntaxError for the unreachable clause — it just never runs.',
+      },
+      {
+        id: 'ch-errors-4',
+        type: 'multipleChoice',
+        stage: 'stretch',
+        tags: ['exceptionType'],
+        prompt:
+          'Which exception type does this raise?\n\nd = {"a": 1}\nd["b"]',
+        options: ['KeyError', 'IndexError', 'ValueError', 'AttributeError'],
+        answerIndex: 0,
+        explanation:
+          'Subscripting a dict with a key that is not present raises KeyError. IndexError is for sequences (lists/tuples) indexed out of range; ValueError is for the right type but wrong value (e.g. int("x")); AttributeError is for a missing attribute.',
+        trapNote:
+          'Match the exception to the operation: dict[missing] → KeyError, list[out_of_range] → IndexError, int("x") → ValueError, 1/0 → ZeroDivisionError. except IndexError would NOT catch this.',
+      },
+      {
+        id: 'ch-errors-5',
+        type: 'traceSteps',
+        stage: 'stretch',
+        tags: ['exceptionType', 'traceback'],
+        prompt: 'Trace the log through try/except/else/finally when NO exception is raised (the divisor is non-zero).',
+        code: 'log = []\ntry:\n    log.append("try")\n    value = 100 / 5\nexcept ZeroDivisionError:\n    log.append("except")\nelse:\n    log.append("else")\nfinally:\n    log.append("finally")',
+        steps: [
+          { line: 3, vars: { log: "['try']" } },
+          { line: 4, vars: { log: "['try']", value: '20.0' }, note: 'no exception, so except is skipped' },
+          { line: 8, vars: { log: "['try', 'else']" }, note: 'else runs only because the try succeeded' },
+          { line: 10, vars: { log: "['try', 'else', 'finally']" }, note: 'finally always runs last' },
+        ],
+        question: 'What is log at the end?',
+        options: [
+          "['try', 'else', 'finally']",
+          "['try', 'except', 'finally']",
+          "['try', 'else']",
+          "['try', 'finally']",
+        ],
+        answerIndex: 0,
+        explanation:
+          'The division succeeds, so except is skipped. else runs precisely because the try block raised nothing, and finally always runs regardless. The log is ["try", "else", "finally"]. (On a ZeroDivisionError it would instead be ["try", "except", "finally"] — else never fires when an exception occurs.)',
+      },
+    ],
+  },
 ];
