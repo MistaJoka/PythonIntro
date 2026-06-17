@@ -86,6 +86,22 @@ describe('content registry', () => {
     }
   });
 
+  it('has all 8 challenge bundles with the expected themes', () => {
+    const ids = getChallengeBundles().map((b) => b.id).sort();
+    expect(ids).toEqual(
+      [
+        'ch-controlflow',
+        'ch-datawrangling',
+        'ch-errors',
+        'ch-idioms',
+        'ch-numbers',
+        'ch-objects',
+        'ch-recursion',
+        'ch-textparse',
+      ].sort(),
+    );
+  });
+
   it('challenge bundles satisfy the item contract and have unique ids', () => {
     // Seed from every other example pool (lessons + lesson-challenges + exams) so a
     // bundle id can never collide with — and be shadowed by — an existing example id.
