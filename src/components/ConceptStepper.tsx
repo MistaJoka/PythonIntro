@@ -8,6 +8,7 @@ interface ConceptStepperProps {
   activeConceptIndex: number;
   onSelectConcept: (conceptIndex: number) => void;
   milestoneConcept?: number | null;
+  compact?: boolean;
 }
 
 export function ConceptStepper({
@@ -15,6 +16,7 @@ export function ConceptStepper({
   activeConceptIndex,
   onSelectConcept,
   milestoneConcept,
+  compact = false,
 }: ConceptStepperProps) {
   const attempts = useProgressStore((s) => s.examples);
 
@@ -24,7 +26,10 @@ export function ConceptStepper({
   ];
 
   return (
-    <nav className="concept-stepper" aria-label="Concept navigation">
+    <nav
+      className={`concept-stepper${compact ? ' concept-stepper--tactical' : ''}`}
+      aria-label="Concept navigation"
+    >
       {chips.map((chip) => {
         const { completed, total } = getConceptProgress(lesson.id, chip.index, attempts);
         const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
@@ -39,7 +44,9 @@ export function ConceptStepper({
             title={`${chip.title} — ${completed}/${total}`}
           >
             <span className="chip-ring" aria-hidden="true" />
-            <span className="chip-label">{chip.isCheck ? '✓ Check' : chip.title.split(' ')[0]}</span>
+            <span className="chip-label">
+              {chip.isCheck ? '✓' : chip.title.split(/\s+/)[0]?.slice(0, 8) ?? chip.title}
+            </span>
           </button>
         );
       })}

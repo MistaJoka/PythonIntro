@@ -19,6 +19,8 @@ export function StateVisualizer({
       example.steps.map((s, i) => ({
         line: s.line,
         vars: s.vars,
+        output: s.output,
+        note: s.note,
         changed: computeChangedVars(example.steps, i),
       })),
     [example.steps],

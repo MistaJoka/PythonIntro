@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { CAPSTONE_PROJECTS } from '../../content/capstones/projects';
 import { COURSE_LESSONS, FULL_COURSE_NOTE } from '../../content/capstones/lessonIndex';
 import { useProgressStore } from '../../store/progress';
+import { TacticalBrief } from '../../components/layout/TacticalBrief';
 
 const DIFFICULTY_LABEL: Record<string, string> = {
   beginner: 'Beginner',
@@ -15,18 +16,16 @@ export function CapstoneHomePage() {
 
   return (
     <div className="capstone-page">
-      <header className="page-header compact-header">
-        <p className="panel-desc tagline">
-          Twelve end-of-course builds — MIT-style finals that synthesize all {COURSE_LESSONS.length}{' '}
-          lessons. {FULL_COURSE_NOTE} Each project includes a full reference solution with
-          line-by-line teaching.
+      <TacticalBrief msgType="OPORD" sector="DEV-BAY">
+        Field deployment ops — {CAPSTONE_PROJECTS.length} end-of-course builds synthesizing all{' '}
+        {COURSE_LESSONS.length} modules. {FULL_COURSE_NOTE} Each op includes a full reference
+        solution with line-by-line debrief.
+      </TacticalBrief>
+      {completedCount > 0 && (
+        <p className="capstone-progress-summary">
+          {completedCount}/{CAPSTONE_PROJECTS.length} ops complete — code cached locally.
         </p>
-        {completedCount > 0 && (
-          <p className="capstone-progress-summary">
-            {completedCount} of {CAPSTONE_PROJECTS.length} projects complete — code saved locally.
-          </p>
-        )}
-      </header>
+      )}
 
       <div className="capstone-grid">
         {CAPSTONE_PROJECTS.map((project, index) => {

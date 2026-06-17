@@ -7,6 +7,7 @@ import {
   useProgressStore,
 } from '../store/progress';
 import { CoverageHeatmap } from '../components/CoverageHeatmap';
+import { TacticalBrief } from '../components/layout/TacticalBrief';
 import { getWeakestTagForDashboard } from '../engine/tagStats';
 import { computeReadinessScore, exportAnkiCsv } from '../engine/readiness';
 
@@ -36,34 +37,37 @@ export function DashboardPage() {
 
   return (
     <div className="dashboard-page">
+      <TacticalBrief msgType="LOG" sector="TELEMETRY">
+        Mission telemetry — progress tally, competency matrix by tag, and data export channels.
+      </TacticalBrief>
       <div className="stats-grid">
         <div className="stat-card">
           <span className="stat-value">{getOverallCompletion()}%</span>
-          <span className="stat-label">Course completion</span>
+          <span className="stat-label">Mission tally</span>
         </div>
         <div className="stat-card">
           <span className="stat-value">{readiness}</span>
-          <span className="stat-label">Readiness</span>
+          <span className="stat-label">C-rate index</span>
         </div>
         <div className="stat-card">
           <span className="stat-value">{countCompletedExamples()}</span>
-          <span className="stat-label">Mastered</span>
+          <span className="stat-label">Confirmed</span>
         </div>
         <div className="stat-card">
           <span className="stat-value">{getTotalExampleCount()}</span>
-          <span className="stat-label">Total examples</span>
+          <span className="stat-label">Total tasks</span>
         </div>
       </div>
-      <h2>Concept heatmap</h2>
+      <h2>Competency matrix</h2>
       {weakestTag && (
         <p className="weakest-tag-cta">
           <Link to={`/review?tag=${weakestTag}`} className="btn-primary btn-link">
-            Practice weakest tag: {weakestTag}
+            Init retrain: {weakestTag}
           </Link>
         </p>
       )}
       <CoverageHeatmap />
-      <h2>By lesson</h2>
+      <h2>Module status</h2>
       <ul className="progress-list">
         {Object.entries(courseProgress)
           .sort(([a], [b]) => a.localeCompare(b))
@@ -141,7 +145,7 @@ export function DashboardPage() {
             URL.revokeObjectURL(url);
           }}
         >
-          Export Progress
+          Export mission data
         </button>
         <button
           type="button"
@@ -160,7 +164,7 @@ export function DashboardPage() {
           Export Anki CSV
         </button>
         <button type="button" className="btn-secondary" onClick={() => fileRef.current?.click()}>
-          Import Progress
+          Import mission data
         </button>
         <input
           ref={fileRef}
@@ -180,7 +184,7 @@ export function DashboardPage() {
             if (confirm('Reset all progress? Export first if needed.')) resetProgress();
           }}
         >
-          Reset Progress
+          Wipe mission data
         </button>
       </div>
     </div>

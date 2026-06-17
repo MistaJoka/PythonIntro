@@ -3,15 +3,15 @@ import { test, expect } from '@playwright/test';
 test.describe('execution trace', () => {
   test('lesson shows one trace panel with step navigation', async ({ page }) => {
     await page.goto('/lesson/lesson01');
-    await expect(page.getByRole('tab', { name: 'Focus' })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Engage' })).toBeVisible();
 
     await expect(page.getByText('Execution trace')).toHaveCount(1);
     await expect(page.getByRole('button', { name: 'Live trace this code' })).toHaveCount(0);
 
     await expect(page.getByText(/Step 1 of/i)).toBeVisible();
-    await page.getByRole('button', { name: 'Next →' }).click();
+    await page.locator('.trace-nav-btn').last().click();
     await expect(page.getByText(/Step 2 of/i)).toBeVisible();
-    await expect(page.getByText(/Explore .* more step/i)).toBeVisible();
+    await expect(page.locator('.trace-explore-badge')).toContainText(/\d+\/4/);
   });
 });
 

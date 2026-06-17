@@ -18,27 +18,26 @@ export function CourseMap() {
   return (
     <div className="command-overview">
       <p className="overview-brief">
-        All systems routed through one console — modules on the left rail, live telemetry on the
-        right, active work in this viewport.
+        C2 terminal online — route training modules via comms rail, execute tasks in this viewport.
       </p>
 
       <div className="overview-grid">
         <div className="overview-card">
-          <span className="overview-card-label">System sync</span>
+          <span className="overview-card-label">Mission tally</span>
           <span className="overview-card-value">{completion}%</span>
           <span className="overview-card-meta">
-            {completeModules} of {LESSON_META.length} modules complete
+            {completeModules}/{LESSON_META.length} modules complete
           </span>
         </div>
         <div className="overview-card">
-          <span className="overview-card-label">Practice queue</span>
+          <span className="overview-card-label">Drill queue</span>
           <span className="overview-card-value">{smartCount}</span>
-          <span className="overview-card-meta">examples loaded</span>
+          <span className="overview-card-meta">tasks pending</span>
         </div>
         <div className="overview-card">
-          <span className="overview-card-label">Active modules</span>
+          <span className="overview-card-label">Training mods</span>
           <span className="overview-card-value">{LESSON_META.length}</span>
-          <span className="overview-card-meta">intro python path</span>
+          <span className="overview-card-meta">intro python AO</span>
         </div>
       </div>
 
@@ -52,25 +51,25 @@ export function CourseMap() {
         )}
         {smartCount > 0 && (
           <Link to="/practice" className="action-card practice-card">
-            <span className="action-label">Engage queue</span>
-            <strong>Smart practice</strong>
-            <span className="action-meta">{smartCount} examples ready</span>
+            <span className="action-label">Init drill</span>
+            <strong>Adaptive queue</strong>
+            <span className="action-meta">{smartCount} tasks loaded</span>
           </Link>
         )}
         <Link to="/exam-prep" className="action-card">
-          <span className="action-label">Exam channel</span>
+          <span className="action-label">Test channel</span>
           <strong>Diagnostic & finals</strong>
-          <span className="action-meta">optional assessment</span>
+          <span className="action-meta">assessment ops</span>
         </Link>
         <Link to="/capstones" className="action-card">
-          <span className="action-label">Build bay</span>
-          <strong>Capstone projects</strong>
-          <span className="action-meta">apply what you learned</span>
+          <span className="action-label">Dev bay</span>
+          <strong>Capstone ops</strong>
+          <span className="action-meta">synthesis deployment</span>
         </Link>
       </section>
 
-      <section className="overview-digest" aria-label="Module sync digest">
-        <span className="rail-section-label">Module sync digest</span>
+      <section className="overview-digest" aria-label="Module status grid">
+        <span className="rail-section-label">Module status matrix</span>
         <div className="digest-grid">
           {LESSON_META.map((meta, index) => {
             const progress = courseProgress[meta.id] ?? 0;

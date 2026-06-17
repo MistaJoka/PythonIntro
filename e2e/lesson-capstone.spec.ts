@@ -3,13 +3,12 @@ import { test, expect } from '@playwright/test';
 test.describe('lesson flow', () => {
   test('submit a trace-steps example in focus mode', async ({ page }) => {
     await page.goto('/lesson/lesson01');
-    await expect(page.getByRole('tab', { name: 'Focus' })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Engage' })).toBeVisible();
 
-    const stepSlider = page.getByRole('slider', { name: 'Execution step' });
     for (let step = 0; step < 3; step += 1) {
-      await page.getByRole('button', { name: 'Next →' }).click();
+      await page.getByRole('button', { name: 'Next step' }).click();
     }
-    await expect(stepSlider).toHaveValue('3');
+    await expect(page.getByText(/Step 4 of 4/i)).toBeVisible();
 
     await page.getByRole('radio', { name: /float/i }).check();
     await page.getByRole('button', { name: 'Check Answer' }).click();

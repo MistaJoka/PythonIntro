@@ -64,6 +64,8 @@ export const traceStepsExampleSchema = baseExample.extend({
     z.object({
       line: z.number(),
       vars: z.record(z.string(), z.string()),
+      output: z.string().optional(),
+      note: z.string().optional(),
     }),
   ),
   question: z.string(),

@@ -74,8 +74,8 @@ export const lesson01: Lesson = {
           steps: [
             { line: 1, vars: { a: '5' } },
             { line: 2, vars: { a: '5', b: '2' } },
-            { line: 3, vars: { a: '5', b: '2' } },
-            { line: 4, vars: { a: '5', b: '2' } },
+            { line: 3, vars: { a: '5', b: '2' }, output: '7\n' },
+            { line: 4, vars: { a: '5', b: '2' }, output: '7\nsum: 7\n' },
           ],
           question: 'What is the first line of output?',
           options: ['7', '8', '6', '14'],

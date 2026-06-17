@@ -10,14 +10,24 @@ import {
   getConceptProgress,
 } from '../engine/lessonQueue';
 import { useProgressStore } from '../store/progress';
-import { ConceptStepper } from './ConceptStepper';
 import { ExampleCard } from './examples/ExampleCard';
+import { FocusTacticalBar } from './FocusTacticalBar';
 
 interface LessonSessionProps {
   lesson: Lesson;
+  viewMode: 'focus' | 'browse';
+  onViewModeChange: (mode: 'focus' | 'browse') => void;
+  showObjectives: boolean;
+  onToggleObjectives: () => void;
 }
 
-export function LessonSession({ lesson }: LessonSessionProps) {
+export function LessonSession({
+  lesson,
+  viewMode,
+  onViewModeChange,
+  showObjectives,
+  onToggleObjectives,
+}: LessonSessionProps) {
   const queue = useMemo(() => getLessonExampleQueue(lesson.id), [lesson.id]);
   const attempts = useProgressStore((s) => s.examples);
   const sessionPosition = useProgressStore((s) => s.sessionPosition[lesson.id]);
@@ -25,6 +35,7 @@ export function LessonSession({ lesson }: LessonSessionProps) {
   const recordLessonCheck = useProgressStore((s) => s.recordLessonCheck);
 
   const strictFocus = useProgressStore((s) => s.strictFocus);
+  const setStrictFocus = useProgressStore((s) => s.setStrictFocus);
   const [lastAttemptCorrect, setLastAttemptCorrect] = useState<boolean | null>(null);
 
   const initialIndex = useMemo(() => {
@@ -96,84 +107,84 @@ export function LessonSession({ lesson }: LessonSessionProps) {
   const atLast = queueIndex >= total - 1;
 
   return (
-    <div className="lesson-session focus-mode">
-      <ConceptStepper
+    <div className="lesson-page lesson-page--focus">
+      <FocusTacticalBar
         lesson={lesson}
+        viewMode={viewMode}
+        onViewModeChange={onViewModeChange}
+        strictFocus={strictFocus}
+        onStrictFocusChange={setStrictFocus}
+        showObjectives={showObjectives}
+        onToggleObjectives={onToggleObjectives}
         activeConceptIndex={item.conceptIndex}
         milestoneConcept={milestoneConcept}
         onSelectConcept={(ci) => goToIndex(getConceptStartQueueIndex(lesson.id, ci))}
+        queueIndex={queueIndex}
+        total={total}
+        conceptTitle={item.conceptTitle}
+        stage={item.example.stage.toUpperCase()}
+        progressPct={progressPct}
       />
 
-      <div className="session-bar">
-        <div className="session-meta">
-          <span className="session-concept">{item.conceptTitle}</span>
-          <span className="stage-badge">{item.example.stage.toUpperCase()}</span>
+      <div className="lesson-session focus-mode">
+        <div className={animating ? 'session-card-wrap motion-exit' : 'session-card-wrap'}>
+          {!animating && (
+            <ExampleCard
+              key={item.example.id}
+              example={item.example}
+              lessonId={lesson.id}
+              focusMode
+              showCompactHeader
+              strictFocus={strictFocus}
+              onReadyToContinue={() => setReadyToContinue(true)}
+              onRetry={() => {
+                setReadyToContinue(false);
+                setLastAttemptCorrect(null);
+              }}
+              onSubmitResult={setLastAttemptCorrect}
+            />
+          )}
         </div>
-        <p className="session-progress-text">
-          Example {queueIndex + 1} of {total}
-        </p>
-        <div className="session-progress-track" aria-hidden="true">
-          <div className="progress-segment" style={{ width: `${progressPct}%` }} />
+
+        <div className="session-controls session-controls--tactical">
+          <button type="button" className="btn-secondary btn-compact" onClick={handleBack} disabled={queueIndex === 0}>
+            ← Prev
+          </button>
+          {!atLast && (
+            <button
+              type="button"
+              className="btn-primary btn-compact"
+              onClick={handleContinue}
+              disabled={!readyToContinue}
+            >
+              Advance →
+            </button>
+          )}
+          {strictFocus && lastAttemptCorrect === false && !readyToContinue && (
+            <p className="strict-hint">Hold — resolve task or disengage Lock protocol.</p>
+          )}
+          {atLast && item.isLessonCheck && allCheckAttempted && (
+            <button
+              type="button"
+              className="btn-primary btn-compact"
+              onClick={() => recordLessonCheck(lesson.id, checkScore)}
+            >
+              Log check ({checkScore}%)
+            </button>
+          )}
+          {atLast && !item.isLessonCheck && (
+            <Link to="/" className="btn-primary btn-link btn-compact">
+              RTB — C2 post
+            </Link>
+          )}
         </div>
-      </div>
 
-      <div className={animating ? 'session-card-wrap motion-exit' : 'session-card-wrap'}>
-        {!animating && (
-          <ExampleCard
-            key={item.example.id}
-            example={item.example}
-            lessonId={lesson.id}
-            focusMode
-            showCompactHeader
-            strictFocus={strictFocus}
-            onReadyToContinue={() => setReadyToContinue(true)}
-            onRetry={() => {
-              setReadyToContinue(false);
-              setLastAttemptCorrect(null);
-            }}
-            onSubmitResult={setLastAttemptCorrect}
-          />
+        {item.isLessonCheck && (
+          <p className="check-progress session-check-progress">
+            Lesson check: {checkCorrect}/{checkIds.length} ({checkScore}%)
+          </p>
         )}
       </div>
-
-      <div className="session-controls">
-        <button type="button" className="btn-secondary" onClick={handleBack} disabled={queueIndex === 0}>
-          ← Back
-        </button>
-        {!atLast && (
-          <button
-            type="button"
-            className="btn-primary"
-            onClick={handleContinue}
-            disabled={!readyToContinue}
-          >
-            Continue →
-          </button>
-        )}
-        {strictFocus && lastAttemptCorrect === false && !readyToContinue && (
-          <p className="strict-hint">Get it right or turn off Strict mode in the lesson header.</p>
-        )}
-        {atLast && item.isLessonCheck && allCheckAttempted && (
-          <button
-            type="button"
-            className="btn-primary"
-            onClick={() => recordLessonCheck(lesson.id, checkScore)}
-          >
-            Save Lesson Check ({checkScore}%)
-          </button>
-        )}
-        {atLast && !item.isLessonCheck && (
-          <Link to="/" className="btn-primary btn-link">
-            Back to course map
-          </Link>
-        )}
-      </div>
-
-      {item.isLessonCheck && (
-        <p className="check-progress session-check-progress">
-          Lesson check: {checkCorrect}/{checkIds.length} correct ({checkScore}%)
-        </p>
-      )}
     </div>
   );
 }

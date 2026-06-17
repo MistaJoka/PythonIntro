@@ -1,5 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { computeChangedVars, type TraceDisplayStep } from '../engine/executionTrace';
+import { useMemo } from 'react';
+import {
+  buildStepSummary,
+  computeChangedVars,
+  inferVarType,
+  varDelta,
+  type TraceDisplayStep,
+} from '../engine/executionTrace';
+import { useExecutionTrace } from '../hooks/useExecutionTrace';
 
 interface ExecutionTraceViewProps {
   code: string;
@@ -18,76 +25,30 @@ export function ExecutionTraceView({
   requireAllSteps = false,
   onAllStepsVisited,
 }: ExecutionTraceViewProps) {
-  const resetKey = steps.map((s) => `${s.line}:${JSON.stringify(s.vars)}`).join('|');
-  const [stepIndex, setStepIndex] = useState(0);
-  const [visited, setVisited] = useState<Set<number>>(() => new Set([0]));
-  const [prevResetKey, setPrevResetKey] = useState(resetKey);
-  const panelRef = useRef<HTMLDivElement>(null);
-
-  if (prevResetKey !== resetKey) {
-    setPrevResetKey(resetKey);
-    setStepIndex(0);
-    setVisited(new Set([0]));
-  }
-
   const lines = useMemo(() => code.split('\n'), [code]);
-  const maxStep = Math.max(0, steps.length - 1);
-  const step = steps[stepIndex];
+  const {
+    stepIndex,
+    maxStep,
+    step,
+    visited,
+    allVisited,
+    progressPct,
+    goToStep,
+    goNext,
+    goPrev,
+    panelRef,
+  } = useExecutionTrace(steps, requireAllSteps, onAllStepsVisited);
+
   const changedSet = useMemo(
     () => new Set(step?.changed ?? computeChangedVars(steps, stepIndex)),
     [step, stepIndex, steps],
   );
 
-  const goToStep = useCallback(
-    (next: number) => {
-      const clamped = Math.max(0, Math.min(maxStep, next));
-      setStepIndex(clamped);
-      setVisited((prev) => {
-        const n = new Set(prev);
-        n.add(clamped);
-        return n;
-      });
-    },
-    [maxStep],
+  const prevVars = stepIndex > 0 ? (steps[stepIndex - 1]?.vars ?? {}) : {};
+  const summary = useMemo(
+    () => buildStepSummary(code, stepIndex, steps),
+    [code, stepIndex, steps],
   );
-
-  useEffect(() => {
-    if (!requireAllSteps) {
-      onAllStepsVisited?.();
-      return;
-    }
-    if (visited.size >= steps.length) {
-      onAllStepsVisited?.();
-    }
-  }, [requireAllSteps, visited.size, steps.length, onAllStepsVisited]);
-
-  useEffect(() => {
-    const el = panelRef.current;
-    if (!el || steps.length === 0) return;
-
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        goToStep(stepIndex - 1);
-      } else if (e.key === 'ArrowRight') {
-        e.preventDefault();
-        goToStep(stepIndex + 1);
-      }
-    };
-
-    el.addEventListener('keydown', onKeyDown);
-    return () => el.removeEventListener('keydown', onKeyDown);
-  }, [goToStep, stepIndex, steps.length]);
-
-  const allVisited = !requireAllSteps || visited.size >= steps.length;
-  const progressPct = steps.length > 0 ? Math.round((visited.size / steps.length) * 100) : 0;
-
-  const nextUnvisitedIndex = useMemo(() => {
-    for (let i = 0; i <= maxStep; i += 1) {
-      if (!visited.has(i)) return i;
-    }
-    return null;
-  }, [visited, maxStep]);
 
   if (steps.length === 0) {
     return (
@@ -98,6 +59,8 @@ export function ExecutionTraceView({
     );
   }
 
+  const stepLabel = `Step ${stepIndex + 1} of ${steps.length}`;
+
   return (
     <div
       ref={panelRef}
@@ -106,107 +69,151 @@ export function ExecutionTraceView({
       role="region"
       aria-label={label}
     >
-      <div className="execution-trace-header">
-        <p className="execution-trace-label">{label}</p>
-        <p className="execution-trace-hint">Use ← → keys or the slider to step through each line.</p>
+      <div className="trace-toolbar">
+        <div className="trace-toolbar-left">
+          <span className="execution-trace-label">{label}</span>
+          <span className="trace-step-readout" aria-live="polite">
+            {stepLabel}
+            {step ? ` · L${step.line}` : ''}
+          </span>
+        </div>
+
+        <div className="trace-step-rail" role="tablist" aria-label="Execution steps">
+          {steps.map((s, i) => {
+            const isCurrent = i === stepIndex;
+            const isVisited = visited.has(i);
+            return (
+              <button
+                key={`${s.line}-${i}`}
+                type="button"
+                role="tab"
+                aria-selected={isCurrent}
+                aria-label={`Step ${i + 1}, line ${s.line}${isVisited ? ', visited' : ''}`}
+                className={`trace-step-dot${isCurrent ? ' current' : ''}${isVisited ? ' visited' : ''}`}
+                onClick={() => goToStep(i)}
+              />
+            );
+          })}
+        </div>
+
+        <div className="trace-toolbar-right">
+          {requireAllSteps && (
+            <span
+              className={`trace-explore-badge${allVisited ? ' complete' : ''}`}
+              title={
+                allVisited
+                  ? 'All steps explored — answer unlocked'
+                  : `Explore ${steps.length - visited.size} more step(s) to unlock the answer`
+              }
+            >
+              {allVisited ? 'Unlocked' : `${visited.size}/${steps.length}`}
+            </span>
+          )}
+          <button
+            type="button"
+            className="trace-nav-btn"
+            disabled={stepIndex === 0}
+            onClick={goPrev}
+            aria-label="Previous step"
+          >
+            ←
+          </button>
+          <button
+            type="button"
+            className={`trace-nav-btn${requireAllSteps && !allVisited && stepIndex < maxStep ? ' pulse' : ''}`}
+            disabled={stepIndex >= maxStep}
+            onClick={goNext}
+            aria-label="Next step"
+          >
+            →
+          </button>
+        </div>
       </div>
 
       {error && <p className="trace-error-note">Stopped early: {error}</p>}
 
-      <pre className="code-block">
-        {lines.map((line, i) => {
-          const lineNum = i + 1;
-          const active = step && lineNum === step.line;
-          const passed = step && lineNum < step.line;
-          return (
-            <div
-              key={i}
-              className={`code-line ${active ? 'active' : ''} ${passed ? 'passed' : ''}`}
-            >
-              <span className="line-num">{lineNum}</span>
-              <span>{line || ' '}</span>
+      <div className="trace-workspace">
+        <div className="trace-code-pane">
+          <pre className="code-block trace-code-block">
+            {lines.map((line, i) => {
+              const lineNum = i + 1;
+              const active = step && lineNum === step.line;
+              const passed = step && lineNum < step.line;
+              const future = step && lineNum > step.line;
+              return (
+                <div
+                  key={i}
+                  className={`code-line ${active ? 'active' : ''} ${passed ? 'passed' : ''} ${future ? 'future' : ''}`}
+                >
+                  <span className="line-num">{lineNum}</span>
+                  <code className="line-src">{line || ' '}</code>
+                </div>
+              );
+            })}
+          </pre>
+        </div>
+
+        <div className="trace-state-pane">
+          <div className="trace-step-summary">
+            <div className="trace-summary-head">
+              <span className="trace-summary-action">{summary.action}</span>
+              <span className="trace-summary-line">Line {summary.line}</span>
             </div>
-          );
-        })}
-      </pre>
-
-      <div className="step-controls">
-        <button type="button" disabled={stepIndex === 0} onClick={() => goToStep(stepIndex - 1)}>
-          ← Prev
-        </button>
-        <input
-          type="range"
-          min={0}
-          max={maxStep}
-          value={stepIndex}
-          onChange={(e) => goToStep(Number(e.target.value))}
-          aria-label="Execution step"
-        />
-        <button
-          type="button"
-          className={requireAllSteps && !allVisited && stepIndex < maxStep ? 'step-next-pulse' : ''}
-          disabled={stepIndex >= maxStep}
-          onClick={() => goToStep(stepIndex + 1)}
-        >
-          Next →
-        </button>
-      </div>
-
-      <div className="execution-trace-meta">
-        <p className="step-progress">
-          Step {stepIndex + 1} of {steps.length}
-          {step ? ` · line ${step.line}` : ''}
-        </p>
-        {requireAllSteps && (
-          <div className="step-visit-track" aria-hidden="true">
-            <div className="step-visit-fill" style={{ width: `${progressPct}%` }} />
+            {summary.source && <code className="trace-summary-source">{summary.source}</code>}
+            <p className="trace-summary-effect">{summary.effect}</p>
           </div>
-        )}
-        {requireAllSteps && (
-          <p className={`step-visit-count ${allVisited ? 'complete' : ''}`}>
-            {allVisited
-              ? 'All steps explored — answer unlocked'
-              : `Explore ${steps.length - visited.size} more step(s) to unlock the answer`}
-          </p>
-        )}
-        {requireAllSteps && !allVisited && nextUnvisitedIndex !== null && nextUnvisitedIndex !== stepIndex && (
-          <button
-            type="button"
-            className="btn-text step-jump-btn"
-            onClick={() => goToStep(nextUnvisitedIndex)}
-          >
-            Jump to next unexplored step →
-          </button>
-        )}
+
+          {step?.output !== undefined && step.output.length > 0 && (
+            <div className="trace-output-block">
+              <span className="trace-pane-label">Output</span>
+              <pre className="trace-output">{step.output.replace(/\n$/, '') || '(empty)'}</pre>
+            </div>
+          )}
+
+          {step && Object.keys(step.vars).length === 0 && !step.output && (
+            <p className="hint-text trace-empty-state">No variables in scope yet.</p>
+          )}
+
+          {step && Object.keys(step.vars).length > 0 && (
+            <div className="trace-vars-block">
+              <span className="trace-pane-label">Variables</span>
+              <table className="var-table execution-var-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.entries(step.vars).map(([k, v]) => {
+                    const changed = changedSet.has(k);
+                    const delta = varDelta(prevVars, k, v);
+                    return (
+                      <tr key={k} className={changed ? 'var-changed' : ''}>
+                        <td>{k}</td>
+                        <td className="var-type">{inferVarType(v)}</td>
+                        <td>
+                          {v}
+                          {changed && delta && <span className="var-delta"> {delta}</span>}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {requireAllSteps && (
+            <div className="trace-explore-meter" aria-hidden="true">
+              <div className="step-visit-fill" style={{ width: `${progressPct}%` }} />
+            </div>
+          )}
+        </div>
       </div>
 
-      {step && Object.keys(step.vars).length === 0 && (
-        <p className="hint-text">No variables in scope at this line yet.</p>
-      )}
-
-      {step && Object.keys(step.vars).length > 0 && (
-        <>
-          <table className="var-table execution-var-table">
-            <thead>
-              <tr>
-                <th>Variable</th>
-                <th>Value</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Object.entries(step.vars).map(([k, v]) => (
-                <tr key={k} className={changedSet.has(k) ? 'var-changed' : ''}>
-                  <td>{k}</td>
-                  <td>{v}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {changedSet.size > 0 && (
-            <p className="var-changed-note">Updated this step: {[...changedSet].join(', ')}</p>
-          )}
-        </>
-      )}
+      <p className="trace-kbd-hint">← → step · Home/End jump · click dots to scrub</p>
     </div>
   );
 }

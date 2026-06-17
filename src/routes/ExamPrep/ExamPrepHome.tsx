@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { EXAM_SETS } from '../../content/registry';
 import { useProgressStore } from '../../store/progress';
 import { computeReadinessScore } from '../../engine/readiness';
+import { TacticalBrief } from '../../components/layout/TacticalBrief';
 
 export function ExamPrepPage() {
   const diagnostic = useProgressStore((s) => s.diagnostic);
@@ -15,29 +16,31 @@ export function ExamPrepPage() {
 
   return (
     <div className="exam-prep-page">
-      <p className="panel-desc tagline">Optional capstone — diagnostic, timed practice finals, readiness score.</p>
+      <TacticalBrief msgType="OPORD" sector="TST-EXAM">
+        Assessment channel — diagnostic sweep, timed finals, and C-rate readiness index.
+      </TacticalBrief>
       <div className="stats-grid">
         <div className="stat-card">
           <span className="stat-value">{readiness}</span>
-          <span className="stat-label">Readiness score</span>
+          <span className="stat-label">C-rate index</span>
         </div>
         <div className="stat-card">
           <span className="stat-value">{examHistory.length}</span>
-          <span className="stat-label">Exams taken</span>
+          <span className="stat-label">Exams logged</span>
         </div>
       </div>
       <section className="exam-section">
-        <h2>Diagnostic</h2>
-        <p>20 questions across all 16 lessons — find weak tags before cramming.</p>
+        <h2>Diagnostic sweep</h2>
+        <p>20 targets across all 16 modules — identify weak sectors before finals.</p>
         {diagnostic && (
           <p className="meta">Last taken: {new Date(diagnostic.date).toLocaleDateString()}</p>
         )}
         <Link to="/exam-prep/diagnostic" className="btn-primary link-btn">
-          {diagnostic ? 'Retake Diagnostic' : 'Start Diagnostic'}
+          {diagnostic ? 'Re-run diagnostic' : 'Deploy diagnostic'}
         </Link>
       </section>
       <section className="exam-section">
-        <h2>Practice Finals</h2>
+        <h2>Practice finals</h2>
         <div className="exam-set-list">
           {EXAM_SETS.map((set) => {
             const last = examHistory.filter((h) => h.examSetId === set.id).at(-1);
@@ -47,7 +50,7 @@ export function ExamPrepPage() {
                 <p>{set.questions.length} questions · {set.durationMin} min</p>
                 {last && <p className="meta">Best: {last.score}%</p>}
                 <Link to={`/exam-prep/sim/${set.id}`} className="btn-secondary link-btn">
-                  Start Exam
+                  Deploy exam
                 </Link>
               </div>
             );

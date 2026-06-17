@@ -1,27 +1,67 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation, useParams } from 'react-router-dom';
 import { LESSON_META } from '../../content/registry';
 import { useProgressStore } from '../../store/progress';
+import { getRailLocus } from './railLocus';
 
 const NAV_ITEMS = [
-  { to: '/', label: 'Overview', glyph: '◈', end: true },
-  { to: '/practice', label: 'Practice', glyph: '⚡', end: false },
-  { to: '/review', label: 'Review', glyph: '↻', end: false },
-  { to: '/capstones', label: 'Capstones', glyph: '◆', end: false },
-  { to: '/exam-prep', label: 'Exam', glyph: '◉', end: false },
-  { to: '/dashboard', label: 'Telemetry', glyph: '▣', end: false },
+  { to: '/', label: 'C2', glyph: '⊕', end: true },
+  { to: '/practice', label: 'Drill', glyph: '⚡', end: false },
+  { to: '/review', label: 'SRS', glyph: '↻', end: false },
+  { to: '/capstones', label: 'Dev', glyph: '◆', end: false },
+  { to: '/exam-prep', label: 'Test', glyph: '◎', end: false },
+  { to: '/dashboard', label: 'Log', glyph: '▣', end: false },
 ] as const;
 
-export function CommandRail() {
+interface CommandRailProps {
+  collapsed: boolean;
+  onToggle: () => void;
+}
+
+export function CommandRail({ collapsed, onToggle }: CommandRailProps) {
+  const { pathname } = useLocation();
+  const { lessonId } = useParams();
   const courseProgress = useProgressStore((s) => s.courseProgress);
+  const locus = getRailLocus(pathname, lessonId);
 
   return (
-    <aside className="command-rail" aria-label="Command navigation">
-      <nav className="rail-nav">
+    <aside
+      className={`command-rail${collapsed ? ' command-rail--collapsed' : ''}`}
+      aria-label="Command navigation"
+    >
+      <div className="rail-head">
+        <button
+          type="button"
+          className="rail-toggle"
+          onClick={onToggle}
+          aria-expanded={!collapsed}
+          aria-controls="command-rail-nav"
+          title={collapsed ? 'Expand navigation' : 'Collapse navigation'}
+        >
+          <span className="rail-toggle-icon" aria-hidden="true">
+            {collapsed ? '›' : '‹'}
+          </span>
+          <span className="sr-only">{collapsed ? 'Expand navigation' : 'Collapse navigation'}</span>
+        </button>
+
+        {!collapsed && <span className="rail-head-label">C2 nav</span>}
+
+        <div
+          className={`rail-locus${collapsed ? '' : ' rail-locus--compact-only'}`}
+          title={locus.label}
+          aria-label={`Current: ${locus.label}`}
+        >
+          <span className={`rail-locus-mark rail-locus-mark--${locus.kind}`}>{locus.glyph}</span>
+          <span className="rail-locus-label">{locus.shortLabel}</span>
+        </div>
+      </div>
+
+      <nav id="command-rail-nav" className="rail-nav">
         {NAV_ITEMS.map(({ to, label, glyph, end }) => (
           <NavLink
             key={to}
             to={to}
             end={end}
+            title={label}
             className={({ isActive }) => (isActive ? 'rail-link active' : 'rail-link')}
           >
             <span className="rail-glyph" aria-hidden="true">
@@ -35,7 +75,7 @@ export function CommandRail() {
       <div className="rail-divider" aria-hidden="true" />
 
       <div className="rail-modules">
-        <span className="rail-section-label">Modules</span>
+        <span className="rail-section-label">{collapsed ? 'MOD' : 'Modules'}</span>
         <ul className="module-list">
           {LESSON_META.map((meta, index) => {
             const progress = courseProgress[meta.id] ?? 0;
@@ -44,6 +84,7 @@ export function CommandRail() {
               <li key={meta.id}>
                 <NavLink
                   to={`/lesson/${meta.id}`}
+                  title={`${meta.title} — ${progress}%`}
                   className={({ isActive }) =>
                     `module-link ${meta.hasContent ? '' : 'stub'} ${progress === 100 ? 'complete' : ''} ${isActive ? 'active' : ''}`
                   }

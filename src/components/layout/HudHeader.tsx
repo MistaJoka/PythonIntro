@@ -5,25 +5,25 @@ import { buildSmartPracticeQueue } from '../../engine/practiceQueue';
 import { computeReadinessScore } from '../../engine/readiness';
 
 function viewportTitle(pathname: string, params: Record<string, string | undefined>): string {
-  if (pathname === '/') return 'Command Overview';
-  if (pathname === '/practice') return 'Smart Practice';
-  if (pathname === '/review') return 'Review Session';
-  if (pathname === '/dashboard') return 'Telemetry Log';
-  if (pathname === '/capstones') return 'Capstone Projects';
-  if (pathname.startsWith('/capstones/')) return 'Capstone Workspace';
-  if (pathname === '/exam-prep') return 'Exam Preparation';
-  if (pathname === '/exam-prep/diagnostic') return 'Diagnostic Assessment';
-  if (pathname.startsWith('/exam-prep/sim/')) return 'Timed Exam';
-  if (pathname.startsWith('/exam-prep/review/')) return 'Exam Review';
+  if (pathname === '/') return 'C2 — COMMAND POST';
+  if (pathname === '/practice') return 'TRG — ADAPTIVE DRILL';
+  if (pathname === '/review') return 'TRG — SRS REVIEW';
+  if (pathname === '/dashboard') return 'LOG — MISSION TELEMETRY';
+  if (pathname === '/capstones') return 'DEV — CAPSTONE OPS';
+  if (pathname.startsWith('/capstones/')) return 'DEV — CAPSTONE WORKSPACE';
+  if (pathname === '/exam-prep') return 'TST — EXAM PREPARATION';
+  if (pathname === '/exam-prep/diagnostic') return 'TST — DIAGNOSTIC SWEEP';
+  if (pathname.startsWith('/exam-prep/sim/')) return 'TST — TIMED EXAM';
+  if (pathname.startsWith('/exam-prep/review/')) return 'TST — EXAM DEBRIEF';
   if (pathname.endsWith('/check') && params.lessonId) {
     const lesson = getLessonById(params.lessonId);
-    return lesson ? `${lesson.title} — Check` : 'Lesson Check';
+    return lesson ? `CHK — ${lesson.title.toUpperCase()}` : 'CHK — MODULE';
   }
   if (params.lessonId) {
     const lesson = getLessonById(params.lessonId);
-    return lesson?.title ?? 'Module';
+    return lesson ? `MOD — ${lesson.title.toUpperCase()}` : 'MOD — TRAINING';
   }
-  return 'Viewport';
+  return 'C2 — TERMINAL';
 }
 
 export function HudHeader() {
@@ -39,32 +39,37 @@ export function HudHeader() {
   const completion = getOverallCompletion();
   const queueCount = buildSmartPracticeQueue(srsQueue, examples, sessionPosition).length;
   const title = viewportTitle(pathname, params);
+  const focusLesson = /^\/lesson\/[^/]+$/.test(pathname);
 
   return (
-    <header className="hud-top">
+    <header className={`hud-top${focusLesson ? ' hud-top--lesson' : ''}`}>
       <NavLink to="/" className="logo hud-logo">
         <span className="logo-mark" aria-hidden="true" />
-        Python<span>Dojo</span>
+        Python<span className="logo-accent">DOJO</span>
       </NavLink>
 
-      <div className="hud-title-block">
-        <span className="hud-label">Active viewport</span>
-        <h1 className="hud-title">{title}</h1>
-      </div>
+      <div className="hud-main">
+        {!focusLesson && (
+          <div className="hud-title-block">
+            <span className="hud-label">Active channel</span>
+            <h1 className="hud-title">{title}</h1>
+          </div>
+        )}
 
-      <div className="hud-chips" aria-label="System metrics">
+        <div className="hud-chips" aria-label="System metrics">
         <span className="hud-chip">
-          <span className="chip-key">RDY</span>
+          <span className="chip-key">C-RATE</span>
           <span className="chip-val">{readiness}</span>
         </span>
         <span className="hud-chip">
-          <span className="chip-key">SYNC</span>
+          <span className="chip-key">TALLY</span>
           <span className="chip-val">{completion}%</span>
         </span>
         <span className="hud-chip">
-          <span className="chip-key">QUE</span>
+          <span className="chip-key">PEND</span>
           <span className="chip-val">{queueCount}</span>
         </span>
+      </div>
       </div>
     </header>
   );

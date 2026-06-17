@@ -3,6 +3,7 @@ import { Navigate, useParams } from 'react-router-dom';
 import { getCapstoneById } from '../../content/capstones/projects';
 import { CapstoneEditor } from '../../components/capstones/CapstoneEditor';
 import { SolutionWalker } from '../../components/capstones/SolutionWalker';
+import { TacticalBrief } from '../../components/layout/TacticalBrief';
 
 type Tab = 'work' | 'solution';
 
@@ -17,18 +18,18 @@ export function CapstoneProjectPage() {
 
   return (
     <div className="capstone-page capstone-detail">
-      <header className="page-header compact-header">
-        <p className="panel-desc tagline">{project.subtitle}</p>
-        <p className="expert-lens">{project.expertLens}</p>
-        <div className="capstone-meta">
-          <span className={`difficulty ${project.difficulty}`}>{project.difficulty}</span>
-          <span className="lesson-count-badge">16/16 lessons</span>
-          <span>{project.topics.join(' · ')}</span>
-        </div>
-      </header>
+      <TacticalBrief msgType="FRAGO" sector={`DEV-${project.id.toUpperCase()}`}>
+        {project.subtitle}
+      </TacticalBrief>
+      <p className="expert-lens">{project.expertLens}</p>
+      <div className="capstone-meta">
+        <span className={`difficulty ${project.difficulty}`}>{project.difficulty}</span>
+        <span className="lesson-count-badge">16/16 modules</span>
+        <span>{project.topics.join(' · ')}</span>
+      </div>
 
       <section className="capstone-section">
-        <h2>Project brief</h2>
+        <h2>Op brief</h2>
         <pre className="brief-text">{project.description}</pre>
         <ul className="objectives-list">
           {project.objectives.map((obj) => (

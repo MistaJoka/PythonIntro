@@ -6,6 +6,7 @@ import { MISTAKE_TAGS, type MistakeTag } from '../content/schema';
 import { buildReviewQueue, getReviewBatch } from '../engine/practiceQueue';
 import { useProgressStore } from '../store/progress';
 import { ReviewSession } from '../components/ReviewSession';
+import { TacticalBrief } from '../components/layout/TacticalBrief';
 
 export function ReviewPage() {
   const [searchParams] = useSearchParams();
@@ -57,15 +58,17 @@ export function ReviewPage() {
 
   return (
     <div className="review-page">
-      <p className="panel-desc">Examples you got wrong or are due for spaced repetition.</p>
+      <TacticalBrief msgType="FRAGO" sector="TRG-REV">
+        Spaced-repetition protocol — items flagged for retraining or overdue per SRS schedule.
+      </TacticalBrief>
       {tagFilter && (
         <p className="tag-filter-banner">
-          Filtering by tag: <strong>{tagFilter}</strong>{' '}
+          Filter active: <strong>{tagFilter}</strong>{' '}
           <Link to="/review">Clear filter</Link>
         </p>
       )}
       <label className="filter-row">
-        Filter by lesson:
+        Module filter:
         <select
           value={lessonFilter}
           onChange={(e) => {
@@ -82,20 +85,21 @@ export function ReviewPage() {
         </select>
       </label>
       <p className="review-queue-meta">
-        {filteredIds.length} total in queue
-        {batchStart > 0 ? ` · batch ${Math.floor(batchStart / 10) + 1}` : ''}
+        {filteredIds.length} targets in queue
+        {batchStart > 0 ? ` · wave ${Math.floor(batchStart / 10) + 1}` : ''}
       </p>
       <ReviewSession
         key={batchKey}
         exampleIds={displayIds}
+        channel="REVIEW DRILL"
         focusMode
         banner={
           displayIds.length > 0
-            ? `${dueToday} due in batch · ${displayIds.length} this batch${remaining > 0 ? ` · ${remaining} more after` : ''}`
+            ? `${dueToday} due · ${displayIds.length} this wave${remaining > 0 ? ` · ${remaining} remain` : ''}`
             : undefined
         }
         onSessionComplete={remaining > 0 ? handleBatchComplete : undefined}
-        continueLabel={remaining > 0 ? `Continue review (${remaining} left) →` : undefined}
+        continueLabel={remaining > 0 ? `Next wave (${remaining} left) →` : undefined}
       />
     </div>
   );

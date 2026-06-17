@@ -3,10 +3,12 @@ import { Link } from 'react-router-dom';
 import { getExampleById } from '../content/registry';
 import { useProgressStore } from '../store/progress';
 import { ExampleCard } from './examples/ExampleCard';
+import { SessionTacticalBar } from './SessionTacticalBar';
 
 interface ReviewSessionProps {
   exampleIds: string[];
   banner?: string;
+  channel?: string;
   focusMode?: boolean;
   onSessionComplete?: () => void;
   continueLabel?: string;
@@ -15,6 +17,7 @@ interface ReviewSessionProps {
 export function ReviewSession({
   exampleIds,
   banner,
+  channel = 'REVIEW DRILL',
   focusMode = false,
   onSessionComplete,
   continueLabel,
@@ -63,25 +66,14 @@ export function ReviewSession({
   };
 
   if (total === 0) {
-    return <p className="empty-review">No misses yet — keep practicing!</p>;
+    return <p className="empty-review">Queue empty — no pending retrain items.</p>;
   }
 
   const atLast = index >= total - 1;
 
   return (
     <div className="lesson-session review-session focus-mode">
-      {banner && <p className="review-banner">{banner}</p>}
-      <div className="session-bar">
-        <p className="session-progress-text">
-          Review {index + 1} of {total}
-        </p>
-        <div className="session-progress-track">
-          <div
-            className="progress-segment"
-            style={{ width: `${Math.round(((index + 1) / total) * 100)}%` }}
-          />
-        </div>
-      </div>
+      <SessionTacticalBar channel={channel} index={index} total={total} status={banner} />
 
       <div className={animating ? 'session-card-wrap motion-exit' : 'session-card-wrap'}>
         {!animating && current && (
@@ -102,27 +94,27 @@ export function ReviewSession({
         )}
       </div>
 
-      <div className="session-controls">
+      <div className="session-controls session-controls--tactical">
         <button type="button" className="btn-secondary" onClick={goBack} disabled={index === 0}>
-          ← Back
+          ← Prev
         </button>
         {!atLast && (
           <button type="button" className="btn-primary" onClick={goNext} disabled={!readyToContinue}>
-            Continue →
+            Advance →
           </button>
         )}
         {atLast && onSessionComplete && (
           <button type="button" className="btn-primary" onClick={handleFinish} disabled={!readyToContinue}>
-            {continueLabel ?? 'Continue review →'}
+            {continueLabel ?? 'Next batch →'}
           </button>
         )}
         {atLast && !onSessionComplete && (
           <Link to="/" className="btn-primary btn-link">
-            Done reviewing
+            RTB — C2 post
           </Link>
         )}
         {strictFocus && lastAttemptCorrect === false && !readyToContinue && (
-          <p className="strict-hint">Get it right or turn off Strict mode.</p>
+          <p className="strict-hint">Hold — resolve task or disengage Lock protocol.</p>
         )}
       </div>
     </div>
