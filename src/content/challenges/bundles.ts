@@ -205,7 +205,7 @@ export const CHALLENGE_BUNDLES: ChallengeBundle[] = [
         id: 'ch-textparse-1',
         type: 'codeChallenge',
         stage: 'build',
-        tags: ['regex'],
+        tags: ['offByOne'],
         prompt:
           'Write is_palindrome(s) that returns True if s reads the same forwards and backwards, ignoring case and any non-alphanumeric characters. is_palindrome("A man, a plan, a canal: Panama") is True; is_palindrome("race a car") is False.',
         starterCode: 'def is_palindrome(s):\n    pass',
@@ -264,20 +264,20 @@ export const CHALLENGE_BUNDLES: ChallengeBundle[] = [
         id: 'ch-textparse-4',
         type: 'multipleChoice',
         stage: 'stretch',
-        tags: ['regex'],
+        tags: ['offByOne', 'typeCoercion'],
         prompt:
-          'What does this return?\n\nimport re\nre.findall(r"\\[.*\\]", "[a] then [b]")',
+          'What does this return?\n\n"a,,b".split(",")',
         options: [
-          "['[a] then [b]']",
-          "['[a]', '[b]']",
+          "['a', '', 'b']",
           "['a', 'b']",
-          "['[a]', ' then ', '[b]']",
+          "['a', ',', 'b']",
+          "['a,,b']",
         ],
         answerIndex: 0,
         explanation:
-          '.* is greedy, so it matches as much as possible: it grabs from the first "[" all the way to the LAST "]", swallowing the middle. The result is one match spanning the whole string.',
+          'str.split(",") splits on EVERY comma and keeps empty fields between consecutive delimiters, so the gap between the two commas becomes "". The result is the 3-element list ["a", "", "b"].',
         trapNote:
-          'To get ["[a]", "[b]"] you would need the non-greedy `\\[.*?\\]`. Plain `.*` is greedy by default.',
+          'split with an explicit separator preserves empties; only the no-argument split() (whitespace mode) collapses runs and drops empties — "  a  b  ".split() is ["a", "b"].',
       },
       {
         id: 'ch-textparse-5',
