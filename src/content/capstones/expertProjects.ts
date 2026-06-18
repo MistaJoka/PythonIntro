@@ -252,7 +252,7 @@ def validate_config(payload: str) -> dict[str, Any]:
         f"{i}:{name}={'dict' if isinstance(val, dict) else type(val).__name__}"
         for i, (name, val) in enumerate(zip(config.keys(), config.values()))
     ]
-    config["_audit"] = json.dumps({"sum": total, "fields": len(audit), "rows": len(rows)})
+    _ = json.dumps({"sum": total, "fields": len(audit), "rows": len(rows)})
     return {"ok": not errors, "config": config, "errors": errors}
 `),
     solutionSteps: [
@@ -499,7 +499,7 @@ def aggregate(values: list) -> dict[str, Any]:
     ]
     ranked = sorted(enumerate(ordered), key=lambda t: (-t[1], t[0]))
     audit_ok = bool(re.fullmatch(r"-?\\d+(?:\\.\\d+)?", str(round(mean, 2))))
-    audit = json.dumps(
+    _ = json.dumps(
         {
             "n": len(ordered),
             "sum": round(total, 4),
@@ -515,7 +515,6 @@ def aggregate(values: list) -> dict[str, Any]:
         "max": high,
         "min": low,
         "dropped": dropped,
-        "_audit": audit,
     }
 `),
     solutionSteps: [
@@ -653,7 +652,7 @@ def validate_form(fields: dict) -> dict[str, Any]:
         (HighlightRow(name, 1.0) if name in errors else ResultRow(name, 0.0)).describe()
         for name in REQUIRED
     ]
-    audit = json.dumps(
+    _ = json.dumps(
         {
             "ok_fields": len(normalized),
             "bad_fields": len(errors),
@@ -668,7 +667,6 @@ def validate_form(fields: dict) -> dict[str, Any]:
         "ok": not errors,
         "normalized": normalized_out,
         "errors": errors,
-        "_audit": audit,
     }
 `),
     solutionSteps: [
@@ -813,13 +811,12 @@ def reconcile(primary: list, secondary: list) -> dict[str, Any]:
             "rows": len(rows),
         }
     )
-    audit_ok = bool(re.fullmatch(r"\\{.*\\}", report))
+    _ = report if bool(re.fullmatch(r"\\{.*\\}", report)) else ""
 
     return {
         "merged": merged,
         "conflicts": conflicts,
         "skipped": skipped,
-        "_audit": report if audit_ok else "",
     }
 `),
     solutionSteps: [
