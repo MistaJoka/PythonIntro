@@ -16,6 +16,7 @@
   --cyan: var(--phosphor);
   --olive: #6d7f52;
   --red: #e85d6c;
+  --magenta: #ff5cff;
   --font-ui: 'Rajdhani', system-ui, sans-serif;
   --font-display: 'Rajdhani', system-ui, sans-serif;
   --font-code: 'JetBrains Mono', monospace;
@@ -3360,7 +3361,7 @@ button {
 }
 
 .difficulty.expert {
-  color: #ff5cff;
+  color: var(--magenta);
 }
 
 .capstone-section {

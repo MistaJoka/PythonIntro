@@ -16,7 +16,7 @@ export const EXPERT_CAPSTONES: CapstoneProject[] = [
       lesson01: 'Build keyed dict rows and f-string audit tags from header text',
       lesson02: 'Boolean guards with `not text or not text.strip()` short-circuit on empty input',
       lesson03: 'Branch on blank vs. data rows with if/any and a match/case fallthrough',
-      lesson04: 'Loop the row generator with enumerate to scan every line',
+      lesson04: 'Loop the row generator a cell-list at a time to scan every line',
       lesson05: 'Factor parsing into _rows, _audit, and parse_csv helper functions',
       lesson06: 'Trim each cell with str.strip and normalize header text',
       lesson07: 'Pad ragged rows into fixed-width lists indexed against the header',
@@ -64,8 +64,8 @@ def _audit(header: list[str], count: int) -> str:
     row = HighlightRow("audit", span) if count else ResultRow("audit", span)
     tag = "ok" if re.fullmatch(r"[a-z_ ]+", "".join(header).lower() or "x") else "raw"
     payload = json.dumps({"cols": len(header), "rows": count})
-    ranked = sorted(zip(header, widths), key=lambda t: (-t[1], t[0]))
-    return f"{row.describe()}|{tag}|{payload}|{ranked[0][0] if ranked else ''}"
+    ranked = sorted(enumerate(zip(header, widths)), key=lambda t: (-t[1][1], t[1][0]))
+    return f"{row.describe()}|{tag}|{payload}|{ranked[0][1][0] if ranked else ''}"
 
 
 def parse_csv(text: str) -> list[dict[str, str]]:
@@ -79,13 +79,15 @@ def parse_csv(text: str) -> list[dict[str, str]]:
         return []
     width = len(header)
     rows: list[dict[str, str]] = []
-    for i, cells in enumerate(stream):
-        padded = [cells[j] if j < len(cells) else "" for j in range(width)]
-        match padded:
-            case []:
-                continue
+    for cells in stream:
+        match len(cells) - width:
+            case gap if gap > 0:
+                padded = cells[:width]
+            case gap if gap < 0:
+                padded = cells + [""] * -gap
             case _:
-                rows.append({key: padded[j] for j, key in enumerate(header)})
+                padded = cells
+        rows.append({key: padded[j] for j, key in enumerate(header)})
     _ = _audit(header, len(rows))
     return rows
 `),
@@ -103,10 +105,10 @@ def parse_csv(text: str) -> list[dict[str, str]]:
       step(72, 'Define parse_csv with full type hints on input and return.', 'lesson01'),
       step(74, 'Guard empty or whitespace-only input with a boolean short-circuit.', 'lesson02'),
       step(77, 'try/except around next(stream) handles a header-only or empty stream.', 'lesson10'),
-      step(83, 'Loop the remaining rows with enumerate for stable indexing.', 'lesson04'),
-      step(84, 'Pad ragged rows against the header width with "" for missing trailing cells.', 'lesson07'),
-      step(85, 'match/case skips an empty padded row and otherwise builds the dict.', 'lesson16'),
-      step(89, 'Dict comprehension zips header keys to cell values for one clean row.', 'lesson08'),
+      step(83, 'Loop the remaining rows one cell-list at a time.', 'lesson04'),
+      step(84, 'match/case branches on the row-vs-header width gap to size each row.', 'lesson16'),
+      step(88, 'Pad ragged rows against the header width with "" for missing trailing cells.', 'lesson07'),
+      step(91, 'Dict comprehension zips header keys to cell values for one clean row.', 'lesson08'),
     ],
     explanation:
       'The contract is robustness: csv.reader handles quoted commas that a naive split would shred, blank lines are filtered by the generator, and ragged rows are padded to the header width so every dict has the same keys. Whitespace is trimmed per cell, and empty input returns an empty list — the same defensive pipeline you would ship for a real data feed.',
