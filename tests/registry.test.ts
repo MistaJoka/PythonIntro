@@ -34,7 +34,7 @@ describe('content registry', () => {
 
   it('has at least 6 expert capstones with cap-exp- ids', () => {
     const expert = CAPSTONE_PROJECTS.filter((p) => p.difficulty === 'expert');
-    expect(expert.length, 'expert capstone count').toBeGreaterThanOrEqual(1);
+    expect(expert.length, 'expert capstone count').toBeGreaterThanOrEqual(6);
     for (const p of expert) {
       expect(p.id.startsWith('cap-exp-'), `${p.id} should be a cap-exp- id`).toBe(true);
     }
