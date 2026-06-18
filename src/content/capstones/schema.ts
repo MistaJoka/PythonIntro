@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { COURSE_LESSONS } from './lessonIndex';
 
-export const CAPSTONE_DIFFICULTIES = ['beginner', 'intermediate', 'advanced'] as const;
+export const CAPSTONE_DIFFICULTIES = ['beginner', 'intermediate', 'advanced', 'expert'] as const;
 export type CapstoneDifficulty = (typeof CAPSTONE_DIFFICULTIES)[number];
 
 const lessonIds = COURSE_LESSONS.map((l) => l.id) as [string, ...string[]];

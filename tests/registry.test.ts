@@ -32,6 +32,14 @@ describe('content registry', () => {
     expect(getCapstoneCount()).toBeGreaterThanOrEqual(10);
   });
 
+  it('has at least 6 expert capstones with cap-exp- ids', () => {
+    const expert = CAPSTONE_PROJECTS.filter((p) => p.difficulty === 'expert');
+    expect(expert.length, 'expert capstone count').toBeGreaterThanOrEqual(6);
+    for (const p of expert) {
+      expect(p.id.startsWith('cap-exp-'), `${p.id} should be a cap-exp- id`).toBe(true);
+    }
+  });
+
   it('each capstone covers all 16 lessons', () => {
     for (const project of CAPSTONE_PROJECTS) {
       expect(project.lessonCoverage).toHaveLength(COURSE_LESSONS.length);

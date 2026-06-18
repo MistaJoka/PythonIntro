@@ -8,6 +8,7 @@ const DIFFICULTY_LABEL: Record<string, string> = {
   beginner: 'Beginner',
   intermediate: 'Intermediate',
   advanced: 'Advanced',
+  expert: 'Expert',
 };
 
 export function CapstoneHomePage() {

@@ -1,9 +1,10 @@
 import { capstoneProjectSchema, type CapstoneProject } from './schema';
 import { buildLessonCoverage } from './lessonIndex';
 import { wrapSolution, step } from './buildSolution';
+import { EXPERT_CAPSTONES } from './expertProjects';
 
 /** Full-course capstone registry — see FULL_COURSE_NOTE in lessonIndex. */
-export const CAPSTONE_PROJECTS: CapstoneProject[] = [
+const BASE_CAPSTONES: CapstoneProject[] = [
   {
     id: "cap-01",
     title: "Academic Records Analyzer",
@@ -1174,6 +1175,8 @@ def build_curriculum_report(payload: str) -> dict[str, Any]:
     explanation: "Combine completion count, recursive average, and per-quiz gap detection to certify readiness.",
   },
 ];
+
+export const CAPSTONE_PROJECTS: CapstoneProject[] = [...BASE_CAPSTONES, ...EXPERT_CAPSTONES];
 
 export function getCapstoneById(id: string): CapstoneProject | undefined {
   return CAPSTONE_PROJECTS.find((p) => p.id === id);
