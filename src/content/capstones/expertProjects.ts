@@ -693,4 +693,155 @@ def validate_form(fields: dict) -> dict[str, Any]:
     explanation:
       'The contract is collect-all-errors validation. Each field gets its own re-backed check — email is trimmed and lowercased, the date is matched against YYYY-MM-DD and a calendar range, the phone is stripped to bare digits and required to be exactly ten. The generator yields one outcome per required field, and validate_form sorts every outcome into either the normalized dict or the errors dict in a single pass, so a form with three mistakes reports three errors rather than one. Missing and non-string fields are guarded rather than raised, and a fully valid form returns ok with normalized values — exactly the feedback a real signup form owes its users.',
   },
+  {
+    id: 'cap-exp-06',
+    title: 'Two-Source Reconciler',
+    subtitle: 'Merge two hostile record feeds by id with deterministic conflict resolution',
+    difficulty: 'expert',
+    expertLens:
+      'Two systems describe the same entities and disagree: an id lives in only one feed, the same id appears twice in one batch, and a field holds different values across sources. A naive `{**a, **b}` merge silently picks a winner by argument order, loses every conflict, and crashes the moment a record is missing its id or is not even a dict. The expert keys both sources, resolves duplicates and conflicts by a documented rule (last-write within a source, primary wins across sources), records every conflict for audit, skips the garbage, and returns a stable, sorted result — the difference between a trustworthy merge and quiet data corruption.',
+    topics: ['merging', 'validation', 'reconciliation', 'robustness', 'adversarial input', 'L1–L16 synthesis'],
+    lessonCoverage: buildLessonCoverage({
+      lesson01: 'Type hints (Any, Iterator, dict[str, Any]) and a documented return-shape dict define the contract',
+      lesson02: 'Boolean logic `not isinstance(record, dict) or id_field not in record` decides record validity',
+      lesson03: 'Conditional expression routes a hashable id through or returns None for a bad one',
+      lesson04: 'Loop each source list once to index records by their id key',
+      lesson05: 'Factor _key_of, _index_source, _merged_records, and reconcile helper functions',
+      lesson06: 'str() coercion of ids and type names builds the sort key and OOP row labels',
+      lesson07: 'Tuple unpacking `p_index, p_bad = _index_source(...)` and `(in_p, in_s)` reads pairs at once',
+      lesson08: 'Set union `set(primary) | set(secondary)` collects all ids; dicts index each source',
+      lesson09: 'Comprehensions build the merged list, conflicting-field list, and OOP row list',
+      lesson10: 'Defensive None/skip on missing-id or non-dict records stands in for a raised exception',
+      lesson11: 'ResultRow / HighlightRow with super() wrap each merged record for the audit',
+      lesson12: '_rec_sum totals merged-record widths recursively — an O(n) scan over the result',
+      lesson13: 'deepcopy a record before mutation and assert it is equal-but-not-identical',
+      lesson14: 'enumerate and sorted with a key rank merged records and order ids deterministically',
+      lesson15: 'json.dumps emits the reconciliation report; re.fullmatch audits its shape',
+      lesson16: 'Generator yields (id, merged record) per key; match/case and type hints classify presence',
+    }),
+    description:
+      'Implement `reconcile(primary, secondary)` that merges two lists of dict records keyed by their `"id"` field.\n\nReturn shape: `{"merged": [...sorted by id...], "conflicts": [...], "skipped": int}`.\n\nThe two feeds are adversarial:\n- a record present in only ONE source → included as-is\n- a DUPLICATE id within a source → last occurrence wins (deterministic)\n- a field with CONFLICTING values for the same id across sources → primary wins, and the conflict is recorded in `conflicts` as `{"id", "field", "primary", "secondary"}`\n- a record missing the `"id"` key, or a non-dict entry → skipped and counted in `skipped`, never a crash\n- `merged` is always returned sorted by id for deterministic output\n\nA naive `{**a, **b}` dict-merge silently drops conflicts, ignores ordering, and raises on the first bad record, so key both sources and resolve every case explicitly.',
+    objectives: [
+      'Key both sources by id, resolving duplicates by last-write and cross-source conflicts by primary-wins',
+      'Record every cross-source field conflict in a structured report',
+      'Skip missing-id and non-dict records without crashing, and return merged sorted by id',
+    ],
+    starterCode:
+      'def reconcile(primary, secondary):\n    """Return {"merged", "conflicts", "skipped"} from two record feeds."""\n    pass',
+    tests: [
+      'r = reconcile([{"id": 1, "a": "x"}], [{"id": 2, "b": "y"}]); assert [rec["id"] for rec in r["merged"]] == [1, 2] and r["conflicts"] == [] and r["skipped"] == 0',
+      'r = reconcile([{"id": 1, "v": "first"}, {"id": 1, "v": "second"}], []); assert len(r["merged"]) == 1 and r["merged"][0]["v"] == "second"',
+      'r = reconcile([{"id": 1, "status": "active"}], [{"id": 1, "status": "stale", "extra": "keep"}]); m = r["merged"][0]; assert m["status"] == "active" and m["extra"] == "keep" and r["conflicts"] == [{"id": 1, "field": "status", "primary": "active", "secondary": "stale"}]',
+      'r = reconcile([{"id": 1, "a": 1}, {"no_id": True}, "junk", 42, None], [{"id": 1, "a": 1}, {"id": 2}]); assert r["skipped"] == 4 and [rec["id"] for rec in r["merged"]] == [1, 2] and r["conflicts"] == []',
+      'r = reconcile([{"id": 3}, {"id": 1}], [{"id": 2}]); assert [rec["id"] for rec in r["merged"]] == [1, 2, 3]',
+    ],
+    solution: wrapSolution(`
+def _key_of(record: Any, id_field: str) -> Any:
+    """L02/L03: return a hashable id for a valid dict record, else None."""
+    if not isinstance(record, dict) or id_field not in record:
+        return None
+    candidate = record[id_field]
+    return candidate if isinstance(candidate, (str, int)) else None
+
+
+def _index_source(records: list, id_field: str) -> tuple[dict, int]:
+    """L05: index one source by id; last duplicate wins, bad records counted."""
+    indexed: dict[Any, dict] = {}
+    bad = 0
+    for record in records:
+        key = _key_of(record, id_field)
+        if key is None:
+            bad += 1
+            continue
+        indexed[key] = record
+    return indexed, bad
+
+
+def _merged_records(
+    primary: dict, secondary: dict, conflicts: list
+) -> Iterator[tuple[Any, dict]]:
+    """L16 generator: yield (id, merged record) for every key across sources."""
+    for key in sorted(set(primary) | set(secondary), key=lambda k: (str(type(k).__name__), k)):
+        in_p = key in primary
+        in_s = key in secondary
+        match (in_p, in_s):
+            case (True, True):
+                base = deepcopy(secondary[key])
+                snapshot = deepcopy(base)
+                assert snapshot == base and snapshot is not base
+                fields = [f for f in base if f in primary[key] and primary[key][f] != base[f]]
+                for field in sorted(fields):
+                    conflicts.append(
+                        {"id": key, "field": field,
+                         "primary": primary[key][field], "secondary": base[field]}
+                    )
+                base.update(primary[key])
+                yield key, base
+            case (True, False):
+                yield key, dict(primary[key])
+            case _:
+                yield key, dict(secondary[key])
+
+
+def reconcile(primary: list, secondary: list) -> dict[str, Any]:
+    """Merge two sources of dict records by id; primary wins conflicts."""
+    id_field = "id"
+    p_index, p_bad = _index_source(primary, id_field)
+    s_index, s_bad = _index_source(secondary, id_field)
+    conflicts: list[dict] = []
+
+    merged = [record for _, record in _merged_records(p_index, s_index, conflicts)]
+    skipped = p_bad + s_bad
+
+    lengths = [float(len(record)) for record in merged]
+    span = _rec_sum(lengths)
+    ranked = sorted(
+        enumerate(merged), key=lambda t: (len(t[1]), t[0]), reverse=True
+    )
+    rows = [
+        (HighlightRow(str(rec.get(id_field, "?")), float(len(rec)))
+         if i == 0 else ResultRow(str(rec.get(id_field, "?")), float(len(rec)))).describe()
+        for i, rec in enumerate(merged)
+    ]
+    report = json.dumps(
+        {
+            "merged": len(merged),
+            "conflicts": len(conflicts),
+            "skipped": skipped,
+            "span": span,
+            "widest": ranked[0][0] if ranked else -1,
+            "rows": len(rows),
+        }
+    )
+    audit_ok = bool(re.fullmatch(r"\\{.*\\}", report))
+
+    return {
+        "merged": merged,
+        "conflicts": conflicts,
+        "skipped": skipped,
+        "_audit": report if audit_ok else "",
+    }
+`),
+    solutionSteps: [
+      step(52, 'Define the id extractor with Any input and an Any-or-None return hint.', 'lesson01'),
+      step(54, 'Boolean guard: a non-dict entry or one missing the id key has no usable id.', 'lesson02'),
+      step(57, 'Conditional expression returns a hashable id or None for an unhashable one.', 'lesson03'),
+      step(60, 'Factor source indexing into its own helper returning the index and bad count.', 'lesson05'),
+      step(64, 'Loop one source list once, indexing each record by its id.', 'lesson04'),
+      step(69, 'Last write wins: a duplicate id overwrites the earlier record deterministically.', 'lesson08'),
+      step(73, 'Generator yields one (id, merged record) tuple per key across both sources.', 'lesson16'),
+      step(77, 'Set union collects every id, sorted for deterministic output ordering.', 'lesson08'),
+      step(80, 'match/case routes a key by whether it is in both sources, only primary, or only secondary.', 'lesson16'),
+      step(83, 'deepcopy the secondary record before mutation and assert equal-but-not-identical.', 'lesson13'),
+      step(85, 'Comprehension finds the fields whose values genuinely conflict across sources.', 'lesson09'),
+      step(91, 'Primary wins: update the copy with primary fields after recording each conflict.', 'lesson07'),
+      step(99, 'Define reconcile with full type hints on inputs and the documented return shape.', 'lesson01'),
+      step(102, 'Tuple unpacking reads the index and bad count from each source at once.', 'lesson07'),
+      step(110, '_rec_sum totals merged-record widths recursively — an O(n) scan.', 'lesson12'),
+      step(114, 'enumerate and sorted rank merged records by width and id; str() builds row labels.', 'lesson14'),
+      step(129, 'json.dumps emits the report and re.fullmatch audits its JSON-object shape.', 'lesson15'),
+    ],
+    explanation:
+      'Reconciliation is a discipline of explicit rules. Both feeds are keyed by id with _index_source, where a duplicate id resolves to the last write — a documented, deterministic choice rather than an accident of ordering. The generator walks the union of ids in sorted order so the output is stable, and a match/case splits each id into present-in-both, primary-only, or secondary-only. When both sources carry the same id, every genuinely differing field is recorded in the conflicts report and then primary wins the merge, so disagreements are surfaced instead of silently overwritten. Records missing an id or that are not dicts are skipped and counted, never raised. The result — merged sorted by id, a structured conflict log, and a skipped count — is exactly the auditable output a real two-source data integration owes its operators, and precisely what a naive `{**a, **b}` merge cannot deliver.',
+  },
 ];
