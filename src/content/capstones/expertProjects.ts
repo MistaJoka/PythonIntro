@@ -407,4 +407,290 @@ def triage_logs(text: str) -> dict[str, Any]:
     explanation:
       'Triage means: extract signal, isolate noise, never crash. A compiled regex parses each line into LEVEL/timestamp/message; unknown levels and partial lines parse to None and are tallied as bad, while blank lines are skipped before they ever count. Valid INFO/WARN/ERROR lines are grouped by level. Because every line is guarded — no bare split-and-unpack — empty or all-malformed input still returns a complete zero-or-partial summary instead of throwing, which is exactly what a log pipeline needs to keep running through a bad batch.',
   },
+  {
+    id: 'cap-exp-04',
+    title: 'Messy Metrics Aggregator',
+    subtitle: 'Coerce hostile values into safe summary stats without dividing by zero',
+    difficulty: 'expert',
+    expertLens:
+      'Real metric feeds are filthy: "$1,200" with a currency sign, " 42 " with stray whitespace, the literal string "NaN", empty strings, None, and the occasional genuine number all arrive in one list. A naive sum(values)/len(values) throws a TypeError on the first string and a ZeroDivisionError when nothing parses. The expert coerces what is salvageable, drops what is not, and always returns a summary — never a stack trace.',
+    topics: ['validation', 'numbers', 'robustness', 'adversarial input', 'L1–L16 synthesis'],
+    lessonCoverage: buildLessonCoverage({
+      lesson01: 'Type hints (Any, float, Iterator) and a keyed summary dict shape the contract',
+      lesson02: 'Boolean guards `not text or not re.fullmatch(...)` and `if not numbers` short-circuit',
+      lesson03: 'if/isinstance branches route bool, numeric, string, and other values differently',
+      lesson04: 'Loop the value list once inside the generator, coercing each element',
+      lesson05: 'Factor _to_number, _clean_token, _valid_numbers, and aggregate helpers',
+      lesson06: 'str.strip, lstrip("$"), and replace(",") clean each numeric token',
+      lesson07: 'Tuple unpacking `low, high = ordered[0], ordered[-1]` reads both ends at once',
+      lesson08: 'Assemble the summary dict keyed by count, mean, max, min, and dropped',
+      lesson09: 'Comprehensions materialize the valid-number list and the OOP row list',
+      lesson10: 'Defensive None return stands in for an exception on unparseable values',
+      lesson11: 'ResultRow / HighlightRow with super() wrap each ordered value',
+      lesson12: '_rec_sum totals the valid numbers recursively — an O(n) scan',
+      lesson13: 'deepcopy the ordered list and assert it is equal-but-not-identical',
+      lesson14: 'enumerate and sorted with a key rank the values by magnitude',
+      lesson15: 'A regex full-match coerces numeric strings; json.dumps emits the audit',
+      lesson16: 'Generator yields each coercible value lazily; match/case-free type guards classify',
+    }),
+    description:
+      'Implement `aggregate(values)` that takes a list of messy values and returns safe summary statistics.\n\nReturn shape: `{"count": int, "mean": float | None, "max": num | None, "min": num | None, "dropped": int}`.\n\nThe input is hostile:\n- coercible strings like `"$1,200"`, `"  42 "` → strip currency/commas/whitespace and parse\n- unparseable junk like `"NaN"`, `""`, `None`, `"abc"`, float `nan`, and bools → dropped\n- plain ints, floats, and negatives → kept as numbers\n- zero valid values (empty list or all-bad) → safe `count: 0` with `None` stats, NEVER a ZeroDivisionError\n\nA naive `sum(values)/len(values)` raises a TypeError on the first string and a ZeroDivisionError on empty input, so coerce defensively and count what you drop.',
+    objectives: [
+      'Coerce salvageable strings to numbers and drop the rest',
+      'Compute mean, min, and max only over valid values',
+      'Return safe zeros/None for empty or all-bad input — never divide by zero',
+    ],
+    starterCode:
+      'def aggregate(values):\n    """Return {"count", "mean", "max", "min", "dropped"} from messy values."""\n    pass',
+    tests: [
+      'r = aggregate(["10", "20", "30"]); assert r["count"] == 3 and r["mean"] == 20.0 and r["max"] == 30.0 and r["min"] == 10.0 and r["dropped"] == 0',
+      'r = aggregate(["$1,200", "  42 ", "NaN", "", None, "abc", 8, 2.5, -3]); assert r["count"] == 5 and r["dropped"] == 4 and r["max"] == 1200.0 and r["min"] == -3.0',
+      'r = aggregate([]); assert r["count"] == 0 and r["mean"] is None and r["max"] is None and r["min"] is None and r["dropped"] == 0',
+      'r = aggregate(["NaN", "", None, "oops", float("nan")]); assert r["count"] == 0 and r["mean"] is None and r["dropped"] == 5',
+      'r = aggregate(["$1,200", "300"]); assert r["count"] == 2 and r["mean"] == 750.0 and r["max"] == 1200.0 and r["min"] == 300.0',
+      'r = aggregate([True, False, "5", 5]); assert r["count"] == 2 and r["max"] == 5.0 and r["min"] == 5.0 and r["dropped"] == 2',
+    ],
+    solution: wrapSolution(`
+def _to_number(value: Any) -> float | None:
+    """L02/L03/L06: coerce one messy value to a float, or None if hopeless."""
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
+        return None if math.isnan(value) else float(value)
+    if not isinstance(value, str):
+        return None
+    text = _clean_token(value)
+    if not text or not re.fullmatch(r"-?\\d+(?:\\.\\d+)?", text):
+        return None
+    return float(text)
+
+
+def _clean_token(value: str) -> str:
+    """L06: strip whitespace, currency, and thousands separators from a token."""
+    return value.strip().lstrip("$").replace(",", "").strip()
+
+
+def _valid_numbers(values: list) -> Iterator[float]:
+    """L16 generator: yield each value that survives coercion, lazily."""
+    for value in values:
+        number = _to_number(value)
+        if number is not None:
+            yield number
+
+
+def aggregate(values: list) -> dict[str, Any]:
+    """Summarize a list of messy values without ever dividing by zero."""
+    numbers = [n for n in _valid_numbers(values)]
+    dropped = len(values) - len(numbers)
+    if not numbers:
+        return {"count": 0, "mean": None, "max": None, "min": None, "dropped": dropped}
+
+    ordered = sorted(numbers)
+    total = _rec_sum(ordered)
+    mean = total / len(ordered)
+    low, high = ordered[0], ordered[-1]
+
+    snapshot = deepcopy(ordered)
+    assert snapshot == ordered and snapshot is not ordered
+
+    rows = [
+        (HighlightRow("value", n) if n == high else ResultRow("value", n)).describe()
+        for n in ordered
+    ]
+    ranked = sorted(enumerate(ordered), key=lambda t: (-t[1], t[0]))
+    audit_ok = bool(re.fullmatch(r"-?\\d+(?:\\.\\d+)?", str(round(mean, 2))))
+    audit = json.dumps(
+        {
+            "n": len(ordered),
+            "sum": round(total, 4),
+            "top": ranked[0][1],
+            "rows": len(rows),
+            "clean": audit_ok,
+        }
+    )
+
+    return {
+        "count": len(ordered),
+        "mean": mean,
+        "max": high,
+        "min": low,
+        "dropped": dropped,
+        "_audit": audit,
+    }
+`),
+    solutionSteps: [
+      step(52, 'Define the coercion helper with Any input and a float-or-None return hint.', 'lesson01'),
+      step(54, 'isinstance branches route bool, numeric, string, and other values apart.', 'lesson03'),
+      step(57, 'Drop a float nan up front so it never poisons the mean.', 'lesson02'),
+      step(60, 'Clean the token, then a regex full-match gates whether it is numeric.', 'lesson15'),
+      step(66, 'Factor token cleaning into its own helper — strip, drop "$", drop commas.', 'lesson06'),
+      step(71, 'A generator yields only the values that survive coercion, lazily.', 'lesson16'),
+      step(73, 'Loop the raw value list once, coercing each element in turn.', 'lesson04'),
+      step(76, 'yield None-free numbers — the defensive return replaces a raised error.', 'lesson10'),
+      step(79, 'Define aggregate with full type hints on input and the summary return.', 'lesson01'),
+      step(81, 'Comprehension materializes the surviving numbers from the generator.', 'lesson09'),
+      step(83, 'Guard the empty case: no valid values returns safe None stats, no divide.', 'lesson02'),
+      step(87, '_rec_sum totals the valid numbers recursively — an O(n) scan.', 'lesson12'),
+      step(89, 'Tuple unpacking reads the min and max ends of the sorted list at once.', 'lesson07'),
+      step(91, 'deepcopy the ordered list and assert it is equal-but-not-identical (is vs ==).', 'lesson13'),
+      step(94, 'Comprehension wraps each value in a ResultRow / HighlightRow object.', 'lesson11'),
+      step(98, 'enumerate and sorted with a key rank the values by magnitude.', 'lesson14'),
+      step(111, 'Assemble the summary dict keyed by count, mean, max, min, and dropped.', 'lesson08'),
+    ],
+    explanation:
+      'The contract is safe aggregation over dirty input. _to_number coerces what it reasonably can — stripping currency signs, thousands commas, and whitespace before a regex gate — and returns None for anything hopeless, so the generator simply drops it and the caller counts the drops. Crucially, the empty-or-all-bad case returns count 0 with None statistics instead of dividing by len 0, and a stray float nan is filtered before it can corrupt the mean. That is the difference between a metrics pass that degrades gracefully on a bad batch and one that takes down the dashboard.',
+  },
+  {
+    id: 'cap-exp-05',
+    title: 'Form Field Validator',
+    subtitle: 'Validate and normalize hostile form fields, collecting every error at once',
+    difficulty: 'expert',
+    expertLens:
+      'A signup form arrives with a mixed-case email padded with spaces, a date in the wrong format, a phone number wearing parentheses and dashes, and a missing field or two. A validator that returns on the first failure forces the user through one round-trip per mistake. The expert validates every field with re, normalizes the good ones, and reports ALL errors in a single pass — the difference between one helpful form and five frustrating resubmissions.',
+    topics: ['regex', 'validation', 'robustness', 'adversarial input', 'L1–L16 synthesis'],
+    lessonCoverage: buildLessonCoverage({
+      lesson01: 'Type hints and an f-string reason like `invalid {name}` tag each field',
+      lesson02: 'Boolean guards `raw is None or (... not raw.strip())` decide presence',
+      lesson03: 'if/elif branches split valid fields from the error dict per result',
+      lesson04: 'Loop the field-result stream once, sorting each into normalized or errors',
+      lesson05: 'Factor _check_email, _check_date, _check_phone, _field_results, validate_form',
+      lesson06: 'str.strip, lower, and re.sub normalize each raw field before checking',
+      lesson07: 'Tuple `(ok, cleaned)` per check and 4-tuple per field are unpacked',
+      lesson08: 'Dict comprehension rebuilds the normalized output in declared field order',
+      lesson09: 'Comprehensions build the length table and the OOP row list',
+      lesson10: 'Defensive non-string and missing guards stand in for raised exceptions',
+      lesson11: 'ResultRow / HighlightRow with super() wrap each field outcome',
+      lesson12: '_rec_sum totals normalized value lengths recursively — an O(n) scan',
+      lesson13: 'deepcopy the errors dict and assert it is equal-but-not-identical',
+      lesson14: 'enumerate and sorted with a key order the required field names',
+      lesson15: 'Compiled regex validates email, date, and phone; json.dumps the audit',
+      lesson16: 'Generator yields a (name, ok, value, reason) tuple per required field',
+    }),
+    description:
+      'Implement `validate_form(fields)` that validates and normalizes a dict of form fields (`email`, `date` as YYYY-MM-DD, `phone`).\n\nReturn shape: `{"ok": bool, "normalized": {...}, "errors": {field: reason, ...}}`.\n\nValidate every field and collect ALL errors:\n- `email` → trim, lowercase, regex-match; otherwise an error\n- `date` → match YYYY-MM-DD and a sane month/day range; otherwise an error\n- `phone` → strip formatting to bare digits and require exactly ten; otherwise an error\n- a missing or blank required field → an error, not a crash\n- a fully valid form → `ok: true` with the normalized values\n\nA naive validator that returns on the first error hides the rest, so collect every field error into the errors dict before returning.',
+    objectives: [
+      'Validate email, date, and phone with regex and normalize the good ones',
+      'Collect ALL field errors in one pass, not just the first',
+      'Report missing and malformed fields without ever raising',
+    ],
+    starterCode:
+      'def validate_form(fields):\n    """Return {"ok", "normalized", "errors"} from a form dict."""\n    pass',
+    tests: [
+      'r = validate_form({"email": "  ALICE@Example.COM ", "date": "2024-01-15", "phone": "(555) 123-4567"}); assert r["ok"] is True and r["normalized"] == {"email": "alice@example.com", "date": "2024-01-15", "phone": "5551234567"} and r["errors"] == {}',
+      'r = validate_form({"email": "not-an-email", "date": "15/01/2024", "phone": "abc"}); assert r["ok"] is False and set(r["errors"]) == {"email", "date", "phone"}',
+      'r = validate_form({"email": "bob@site.io", "date": "2024-12-31"}); assert r["ok"] is False and r["errors"]["phone"] == "missing required field"',
+      'r = validate_form({"email": "  ", "date": "2024-06-01", "phone": "5559998888"}); assert r["ok"] is False and r["errors"]["email"] == "missing required field" and r["normalized"]["date"] == "2024-06-01" and r["normalized"]["phone"] == "5559998888"',
+      'r = validate_form({"email": "c@d.co", "date": "2024-13-01", "phone": "1234567890"}); assert r["ok"] is False and "date" in r["errors"]',
+    ],
+    solution: wrapSolution(`
+REQUIRED = ("email", "date", "phone")
+_EMAIL = re.compile(r"^[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}$")
+_DATE = re.compile(r"^(\\d{4})-(\\d{2})-(\\d{2})$")
+_PHONE = re.compile(r"^\\d{10}$")
+
+
+def _check_email(value: str) -> tuple[bool, str]:
+    """L06/L15: lowercase and trim, then regex-validate an email address."""
+    cleaned = value.strip().lower()
+    return bool(_EMAIL.fullmatch(cleaned)), cleaned
+
+
+def _check_date(value: str) -> tuple[bool, str]:
+    """L02/L15: validate a YYYY-MM-DD date by format and calendar range."""
+    cleaned = value.strip()
+    match = _DATE.fullmatch(cleaned)
+    if match is None:
+        return False, cleaned
+    _, month, day = (int(g) for g in match.groups())
+    ok = 1 <= month <= 12 and 1 <= day <= 31
+    return ok, cleaned
+
+
+def _check_phone(value: str) -> tuple[bool, str]:
+    """L06/L15: strip formatting to bare digits, then require exactly ten."""
+    digits = re.sub(r"[\\s().+-]", "", value.strip())
+    return bool(_PHONE.fullmatch(digits)), digits
+
+
+_CHECKS: dict[str, Any] = {
+    "email": _check_email,
+    "date": _check_date,
+    "phone": _check_phone,
+}
+
+
+def _field_results(fields: dict) -> Iterator[tuple[str, bool, str, str]]:
+    """L16 generator: yield (name, ok, value, reason) for every required field."""
+    for name in REQUIRED:
+        raw = fields.get(name)
+        if raw is None or (isinstance(raw, str) and not raw.strip()):
+            yield (name, False, "", "missing required field")
+            continue
+        if not isinstance(raw, str):
+            yield (name, False, "", "must be a string")
+            continue
+        ok, cleaned = _CHECKS[name](raw)
+        yield (name, ok, cleaned, "" if ok else f"invalid {name}")
+
+
+def validate_form(fields: dict) -> dict[str, Any]:
+    """Validate and normalize a form dict, collecting ALL field errors."""
+    normalized: dict[str, str] = {}
+    errors: dict[str, str] = {}
+    for name, ok, value, reason in _field_results(fields):
+        if ok:
+            normalized[name] = value
+        else:
+            errors[name] = reason
+
+    snapshot = deepcopy(errors)
+    assert snapshot == errors and snapshot is not errors
+
+    lengths = [float(len(v)) for v in normalized.values()]
+    span = _rec_sum(lengths)
+    ranked = sorted(enumerate(REQUIRED), key=lambda t: (t[1], t[0]))
+    rows = [
+        (HighlightRow(name, 1.0) if name in errors else ResultRow(name, 0.0)).describe()
+        for name in REQUIRED
+    ]
+    audit = json.dumps(
+        {
+            "ok_fields": len(normalized),
+            "bad_fields": len(errors),
+            "span": span,
+            "first": ranked[0][1],
+            "rows": len(rows),
+        }
+    )
+    normalized_out = {key: normalized[key] for key in REQUIRED if key in normalized}
+
+    return {
+        "ok": not errors,
+        "normalized": normalized_out,
+        "errors": errors,
+        "_audit": audit,
+    }
+`),
+    solutionSteps: [
+      step(52, 'Name the required fields and compile a regex for each field type once.', 'lesson15'),
+      step(58, 'Factor email validation: trim, lowercase, then regex full-match.', 'lesson06'),
+      step(64, 'Validate the date by both format and a sane month/day range.', 'lesson02'),
+      step(70, 'Unpack the regex groups into year, month, day as ints.', 'lesson07'),
+      step(75, 'Strip phone formatting to bare digits with re.sub before the length check.', 'lesson06'),
+      step(88, 'A generator yields a (name, ok, value, reason) tuple per required field.', 'lesson16'),
+      step(92, 'Boolean guard treats a missing or blank field as absent, not a crash.', 'lesson02'),
+      step(95, 'Defensive non-string guard stands in for a raised type error.', 'lesson10'),
+      step(99, 'Tag a failed check with an f-string reason naming the field.', 'lesson01'),
+      step(102, 'Define validate_form with type hints on the form dict and result.', 'lesson01'),
+      step(106, 'Loop the field-result stream once, sorting each into normalized or errors.', 'lesson04'),
+      step(112, 'deepcopy the errors dict and assert it is equal-but-not-identical (is vs ==).', 'lesson13'),
+      step(115, 'Comprehension totals normalized value lengths for the recursive span.', 'lesson09'),
+      step(116, '_rec_sum totals the lengths recursively — an O(n) scan.', 'lesson12'),
+      step(117, 'enumerate and sorted with a key order the required field names.', 'lesson14'),
+      step(118, 'Comprehension wraps each field outcome in a ResultRow / HighlightRow.', 'lesson11'),
+      step(131, 'Dict comprehension rebuilds the normalized output in declared field order.', 'lesson08'),
+    ],
+    explanation:
+      'The contract is collect-all-errors validation. Each field gets its own re-backed check — email is trimmed and lowercased, the date is matched against YYYY-MM-DD and a calendar range, the phone is stripped to bare digits and required to be exactly ten. The generator yields one outcome per required field, and validate_form sorts every outcome into either the normalized dict or the errors dict in a single pass, so a form with three mistakes reports three errors rather than one. Missing and non-string fields are guarded rather than raised, and a fully valid form returns ok with normalized values — exactly the feedback a real signup form owes its users.',
+  },
 ];
