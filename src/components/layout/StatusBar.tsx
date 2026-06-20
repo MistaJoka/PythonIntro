@@ -5,28 +5,29 @@ import { formatZuluTime } from '../../engine/zuluClock';
 import { getOverallCompletion, useProgressStore } from '../../store/progress';
 
 function sectorLabel(pathname: string, params: Record<string, string | undefined>): string {
-  if (pathname === '/') return 'C2 // OVERVIEW';
-  if (pathname === '/practice') return 'TRG // DRILL QUEUE';
-  if (pathname === '/review') return 'TRG // SRS REVIEW';
-  if (pathname === '/dashboard') return 'LOG // TELEMETRY';
-  if (pathname === '/capstones') return 'DEV // CAPSTONE BAY';
+  if (pathname === '/') return 'Overview';
+  if (pathname === '/practice') return 'Practice';
+  if (pathname === '/review') return 'Spaced Review';
+  if (pathname === '/dashboard') return 'History';
+  if (pathname === '/capstones') return 'Projects';
   if (pathname.startsWith('/capstones/') && params.projectId) {
     const project = getCapstoneById(params.projectId);
-    return project ? `DEV // ${project.title.toUpperCase()}` : 'DEV // CAPSTONE';
+    return project ? `Projects — ${project.title}` : 'Projects';
   }
-  if (pathname === '/exam-prep') return 'TST // EXAM PREP';
-  if (pathname === '/exam-prep/diagnostic') return 'TST // DIAGNOSTIC';
-  if (pathname.startsWith('/exam-prep/sim/')) return 'TST // EXAM SIM';
-  if (pathname.startsWith('/exam-prep/review/')) return 'TST // DEBRIEF';
+  if (pathname === '/exam-prep') return 'Exam Prep';
+  if (pathname === '/exam-prep/diagnostic') return 'Diagnostic';
+  if (pathname.startsWith('/exam-prep/sim/')) return 'Timed Exam';
+  if (pathname.startsWith('/exam-prep/review/')) return 'Exam Review';
   if (pathname.endsWith('/check') && params.lessonId) {
     const lesson = getLessonById(params.lessonId);
-    return lesson ? `CHK // ${lesson.title.toUpperCase()}` : 'CHK // MODULE';
+    return lesson ? `Check — ${lesson.title}` : 'Module Check';
   }
   if (params.lessonId) {
     const lesson = getLessonById(params.lessonId);
-    return lesson ? `MOD // ${lesson.title.toUpperCase()}` : 'MOD // TRAINING';
+    return lesson ? `Module — ${lesson.title}` : 'Module';
   }
-  return 'C2 // TERMINAL';
+  if (pathname === '/showroom') return 'Showroom';
+  return 'Challenges';
 }
 
 export function StatusBar() {
@@ -48,9 +49,9 @@ export function StatusBar() {
       <span className="status-sector">{sector}</span>
       <span className="status-path">{pathname}</span>
       <span className="status-meta">
-        <span className="status-pill online">NET: UP</span>
-        <span className="status-pill">TALLY {completion}%</span>
-        <span className="status-pill">PEND {srsCount}</span>
+        <span className="status-pill online">Online</span>
+        <span className="status-pill">Progress {completion}%</span>
+        <span className="status-pill">Due {srsCount}</span>
         <span className="status-clock" title="Zulu time">
           {zulu}
         </span>

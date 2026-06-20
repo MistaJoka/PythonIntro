@@ -4,13 +4,14 @@ import { useProgressStore } from '../../store/progress';
 import { getRailLocus } from './railLocus';
 
 const NAV_ITEMS = [
-  { to: '/', label: 'C2', glyph: '⊕', end: true },
-  { to: '/practice', label: 'Drill', glyph: '⚡', end: false },
-  { to: '/review', label: 'SRS', glyph: '↻', end: false },
-  { to: '/capstones', label: 'Dev', glyph: '◆', end: false },
-  { to: '/exam-prep', label: 'Test', glyph: '◎', end: false },
-  { to: '/challenges', label: 'Arena', glyph: '✦', end: false },
-  { to: '/dashboard', label: 'Log', glyph: '▣', end: false },
+  { to: '/', label: 'Home', glyph: '⊕', end: true },
+  { to: '/practice', label: 'Practice', glyph: '⚡', end: false },
+  { to: '/review', label: 'Review', glyph: '↻', end: false },
+  { to: '/capstones', label: 'Projects', glyph: '◆', end: false },
+  { to: '/exam-prep', label: 'Exams', glyph: '◎', end: false },
+  { to: '/challenges', label: 'Challenges', glyph: '✦', end: false },
+  { to: '/showroom', label: 'Showroom', glyph: '◈', end: false },
+  { to: '/dashboard', label: 'History', glyph: '▣', end: false },
 ] as const;
 
 interface CommandRailProps {
@@ -44,7 +45,7 @@ export function CommandRail({ collapsed, onToggle }: CommandRailProps) {
           <span className="sr-only">{collapsed ? 'Expand navigation' : 'Collapse navigation'}</span>
         </button>
 
-        {!collapsed && <span className="rail-head-label">C2 nav</span>}
+        {!collapsed && <span className="rail-head-label">Navigation</span>}
 
         <div
           className={`rail-locus${collapsed ? '' : ' rail-locus--compact-only'}`}

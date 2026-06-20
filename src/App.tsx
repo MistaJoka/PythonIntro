@@ -14,6 +14,7 @@ import { CapstoneHomePage } from './routes/Capstones/CapstoneHome';
 import { CapstoneProjectPage } from './routes/Capstones/CapstoneProject';
 import { ChallengeHomePage } from './routes/Challenges/ChallengeHome';
 import { ChallengeBundlePage } from './routes/Challenges/ChallengeBundlePage';
+import { ShowroomPage } from './routes/Showroom/ShowroomPage';
 
 export default function App() {
   return (
@@ -32,6 +33,7 @@ export default function App() {
           <Route path="exam-prep/review/:examSetId" element={<ReviewSheetPage />} />
           <Route path="challenges" element={<ChallengeHomePage />} />
           <Route path="challenges/:bundleId" element={<ChallengeBundlePage />} />
+          <Route path="showroom" element={<ShowroomPage />} />
           <Route path="capstones" element={<CapstoneHomePage />} />
           <Route path="capstones/:projectId" element={<CapstoneProjectPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
