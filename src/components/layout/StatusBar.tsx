@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { getLessonById, getCapstoneById } from '../../content/registry';
-import { formatZuluTime } from '../../engine/zuluClock';
 import { getOverallCompletion, useProgressStore } from '../../store/progress';
 
 function sectorLabel(pathname: string, params: Record<string, string | undefined>): string {
@@ -37,10 +36,11 @@ export function StatusBar() {
   const srsCount = useProgressStore((s) => s.srsQueue.length);
 
   const sector = sectorLabel(pathname, params);
-  const [zulu, setZulu] = useState(() => formatZuluTime());
+  const fmtClock = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const [clock, setClock] = useState(fmtClock);
 
   useEffect(() => {
-    const id = setInterval(() => setZulu(formatZuluTime()), 1000);
+    const id = setInterval(() => setClock(fmtClock()), 10000);
     return () => clearInterval(id);
   }, []);
 
@@ -52,9 +52,7 @@ export function StatusBar() {
         <span className="status-pill online">Online</span>
         <span className="status-pill">Progress {completion}%</span>
         <span className="status-pill">Due {srsCount}</span>
-        <span className="status-clock" title="Zulu time">
-          {zulu}
-        </span>
+        <span className="status-clock">{clock}</span>
       </span>
     </footer>
   );

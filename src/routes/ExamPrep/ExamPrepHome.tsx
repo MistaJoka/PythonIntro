@@ -16,13 +16,13 @@ export function ExamPrepPage() {
 
   return (
     <div className="exam-prep-page">
-      <TacticalBrief msgType="OPORD" sector="TST-EXAM">
-        Assessment channel — diagnostic sweep, timed finals, and C-rate readiness index.
+      <TacticalBrief>
+        Diagnostic sweep, timed finals, and accuracy tracking — {EXAM_SETS.length} exam sets across all 16 modules.
       </TacticalBrief>
       <div className="stats-grid">
         <div className="stat-card">
           <span className="stat-value">{readiness}</span>
-          <span className="stat-label">C-rate index</span>
+          <span className="stat-label">Accuracy score</span>
         </div>
         <div className="stat-card">
           <span className="stat-value">{examHistory.length}</span>
@@ -31,12 +31,12 @@ export function ExamPrepPage() {
       </div>
       <section className="exam-section">
         <h2>Diagnostic sweep</h2>
-        <p>20 targets across all 16 modules — identify weak sectors before finals.</p>
+        <p>20 questions across all 16 modules — results flag your weakest concepts.</p>
         {diagnostic && (
           <p className="meta">Last taken: {new Date(diagnostic.date).toLocaleDateString()}</p>
         )}
         <Link to="/exam-prep/diagnostic" className="btn-primary link-btn">
-          {diagnostic ? 'Re-run diagnostic' : 'Deploy diagnostic'}
+          {diagnostic ? 'Re-run diagnostic' : 'Start diagnostic'}
         </Link>
       </section>
       <section className="exam-section">
@@ -50,7 +50,7 @@ export function ExamPrepPage() {
                 <p>{set.questions.length} questions · {set.durationMin} min</p>
                 {last && <p className="meta">Best: {last.score}%</p>}
                 <Link to={`/exam-prep/sim/${set.id}`} className="btn-secondary link-btn">
-                  Deploy exam
+                  Start exam
                 </Link>
               </div>
             );

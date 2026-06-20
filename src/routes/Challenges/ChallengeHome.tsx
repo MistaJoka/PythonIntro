@@ -9,13 +9,13 @@ export function ChallengeHomePage() {
 
   return (
     <div className="challenge-page">
-      <TacticalBrief msgType="OPORD" sector="ARENA">
-        Cross-lesson trials — {bundles.length} themed bundles combining multiple modules. Harder
-        than module drills; each mixes live-coded tasks and reasoning.
+      <TacticalBrief>
+        Cross-topic challenges — {bundles.length} themed bundles that combine multiple modules.
+        Harder than individual module exercises; each mixes live-coded tasks and reasoning questions.
       </TacticalBrief>
       <div className="challenge-grid">
         {bundles.map((bundle) => (
-          <Link key={bundle.id} to={`/challenges/${bundle.id}`} className="challenge-card">
+          <Link key={bundle.id} to={`/challenges/${bundle.id}`} className={`challenge-card diff-${bundle.difficulty}`}>
             <span className={`challenge-badge difficulty-${bundle.difficulty}`}>
               {ROMAN[bundle.difficulty]}
             </span>

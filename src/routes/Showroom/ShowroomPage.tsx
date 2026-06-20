@@ -12,8 +12,7 @@ export function ShowroomPage() {
   return (
     <div className="showroom-page">
       <TacticalBrief>
-        Finished programs using advanced Python techniques — read the code and annotations to see
-        how each pattern works in practice.
+        Real programs from the course — read code with line-by-line annotations.
       </TacticalBrief>
       <div className="showroom-layout">
         <div className="showroom-list">

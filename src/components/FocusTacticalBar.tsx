@@ -45,21 +45,21 @@ export function FocusTacticalBar({
               type="button"
               role="tab"
               aria-selected={viewMode === 'focus'}
-              aria-label="Engage mode"
+              aria-label="Practice mode"
               className={viewMode === 'focus' ? 'active' : ''}
               onClick={() => onViewModeChange('focus')}
             >
-              Engage
+              Practice
             </button>
             <button
               type="button"
               role="tab"
               aria-selected={viewMode === 'browse'}
-              aria-label="Intel mode"
+              aria-label="Reference mode"
               className={viewMode === 'browse' ? 'active' : ''}
               onClick={() => onViewModeChange('browse')}
             >
-              Intel
+              Reference
             </button>
           </div>
         </div>

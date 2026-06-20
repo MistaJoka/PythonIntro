@@ -17,14 +17,14 @@ export function CapstoneHomePage() {
 
   return (
     <div className="capstone-page">
-      <TacticalBrief msgType="OPORD" sector="DEV-BAY">
-        Field deployment ops — {CAPSTONE_PROJECTS.length} end-of-course builds synthesizing all{' '}
-        {COURSE_LESSONS.length} modules. {FULL_COURSE_NOTE} Each op includes a full reference
-        solution with line-by-line debrief.
+      <TacticalBrief>
+        End-of-course projects — {CAPSTONE_PROJECTS.length} complete programs that synthesize all{' '}
+        {COURSE_LESSONS.length} modules. {FULL_COURSE_NOTE} Each includes a full reference solution
+        with a line-by-line walkthrough.
       </TacticalBrief>
       {completedCount > 0 && (
         <p className="capstone-progress-summary">
-          {completedCount}/{CAPSTONE_PROJECTS.length} ops complete — code cached locally.
+          {completedCount}/{CAPSTONE_PROJECTS.length} projects completed.
         </p>
       )}
 

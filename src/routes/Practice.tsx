@@ -12,15 +12,15 @@ export function PracticePage() {
 
   return (
     <div className="practice-page">
-      <TacticalBrief msgType="SITREP" sector="TRG-DRILL">
-        Auto-sequenced task queue — due SRS items, recent misses, and next incomplete modules.
+      <TacticalBrief>
+        SRS queue — due items, recent misses, and the next unseen example in your current module.
       </TacticalBrief>
       <ReviewSession
         exampleIds={queueIds}
-        channel="SMART DRILL"
+        channel="PRACTICE"
         banner={
           queueIds.length > 0
-            ? `${queueIds.length} sorties in queue`
+            ? `${queueIds.length} questions queued`
             : undefined
         }
         focusMode

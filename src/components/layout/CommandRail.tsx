@@ -1,7 +1,6 @@
-import { NavLink, useLocation, useParams } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import { LESSON_META } from '../../content/registry';
 import { useProgressStore } from '../../store/progress';
-import { getRailLocus } from './railLocus';
 
 const NAV_ITEMS = [
   { to: '/', label: 'Home', glyph: '⊕', end: true },
@@ -20,10 +19,9 @@ interface CommandRailProps {
 }
 
 export function CommandRail({ collapsed, onToggle }: CommandRailProps) {
-  const { pathname } = useLocation();
-  const { lessonId } = useParams();
   const courseProgress = useProgressStore((s) => s.courseProgress);
-  const locus = getRailLocus(pathname, lessonId);
+  const completeCount = LESSON_META.filter((m) => (courseProgress[m.id] ?? 0) === 100).length;
+  const total = LESSON_META.length;
 
   return (
     <aside
@@ -46,15 +44,6 @@ export function CommandRail({ collapsed, onToggle }: CommandRailProps) {
         </button>
 
         {!collapsed && <span className="rail-head-label">Navigation</span>}
-
-        <div
-          className={`rail-locus${collapsed ? '' : ' rail-locus--compact-only'}`}
-          title={locus.label}
-          aria-label={`Current: ${locus.label}`}
-        >
-          <span className={`rail-locus-mark rail-locus-mark--${locus.kind}`}>{locus.glyph}</span>
-          <span className="rail-locus-label">{locus.shortLabel}</span>
-        </div>
       </div>
 
       <nav id="command-rail-nav" className="rail-nav">
@@ -76,8 +65,16 @@ export function CommandRail({ collapsed, onToggle }: CommandRailProps) {
 
       <div className="rail-divider" aria-hidden="true" />
 
-      <div className="rail-modules">
-        <span className="rail-section-label">{collapsed ? 'MOD' : 'Modules'}</span>
+      <details className="rail-modules" open>
+        <summary
+          className="rail-section-label"
+          onClick={collapsed ? (e) => e.preventDefault() : undefined}
+        >
+          {collapsed ? 'MOD' : 'Modules'}
+          {!collapsed && (
+            <span className="rail-module-count">{completeCount}/{total}</span>
+          )}
+        </summary>
         <ul className="module-list">
           {LESSON_META.map((meta, index) => {
             const progress = courseProgress[meta.id] ?? 0;
@@ -104,7 +101,7 @@ export function CommandRail({ collapsed, onToggle }: CommandRailProps) {
             );
           })}
         </ul>
-      </div>
+      </details>
     </aside>
   );
 }

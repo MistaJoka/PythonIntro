@@ -13,7 +13,7 @@ export function ChallengeBundlePage() {
 
   return (
     <div className="challenge-bundle-page">
-      <TacticalBrief msgType="SITREP" sector="ARENA">
+      <TacticalBrief>
         {bundle.title} — {bundle.blurb}
       </TacticalBrief>
       <ReviewSession

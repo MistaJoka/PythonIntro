@@ -37,17 +37,17 @@ export function DashboardPage() {
 
   return (
     <div className="dashboard-page">
-      <TacticalBrief msgType="LOG" sector="TELEMETRY">
-        Mission telemetry — progress tally, competency matrix by tag, and data export channels.
+      <TacticalBrief>
+        Progress, accuracy by tag, and data export.
       </TacticalBrief>
       <div className="stats-grid">
         <div className="stat-card">
           <span className="stat-value">{getOverallCompletion()}%</span>
-          <span className="stat-label">Mission tally</span>
+          <span className="stat-label">Overall progress</span>
         </div>
         <div className="stat-card">
           <span className="stat-value">{readiness}</span>
-          <span className="stat-label">C-rate index</span>
+          <span className="stat-label">Accuracy score</span>
         </div>
         <div className="stat-card">
           <span className="stat-value">{countCompletedExamples()}</span>
@@ -62,7 +62,7 @@ export function DashboardPage() {
       {weakestTag && (
         <p className="weakest-tag-cta">
           <Link to={`/review?tag=${weakestTag}`} className="btn-primary btn-link">
-            Init retrain: {weakestTag}
+            Practice: {weakestTag}
           </Link>
         </p>
       )}
@@ -145,7 +145,7 @@ export function DashboardPage() {
             URL.revokeObjectURL(url);
           }}
         >
-          Export mission data
+          Export progress
         </button>
         <button
           type="button"
@@ -164,7 +164,7 @@ export function DashboardPage() {
           Export Anki CSV
         </button>
         <button type="button" className="btn-secondary" onClick={() => fileRef.current?.click()}>
-          Import mission data
+          Import progress
         </button>
         <input
           ref={fileRef}
@@ -184,7 +184,7 @@ export function DashboardPage() {
             if (confirm('Reset all progress? Export first if needed.')) resetProgress();
           }}
         >
-          Wipe mission data
+          Reset all progress
         </button>
       </div>
     </div>

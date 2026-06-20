@@ -18,7 +18,7 @@ export function CapstoneProjectPage() {
 
   return (
     <div className="capstone-page capstone-detail">
-      <TacticalBrief msgType="FRAGO" sector={`DEV-${project.id.toUpperCase()}`}>
+      <TacticalBrief>
         {project.subtitle}
       </TacticalBrief>
       <p className="expert-lens">{project.expertLens}</p>

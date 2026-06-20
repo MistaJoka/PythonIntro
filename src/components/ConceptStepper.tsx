@@ -45,7 +45,7 @@ export function ConceptStepper({
           >
             <span className="chip-ring" aria-hidden="true" />
             <span className="chip-label">
-              {chip.isCheck ? '✓' : chip.title.split(/\s+/)[0]?.slice(0, 8) ?? chip.title}
+              {chip.isCheck ? '✓' : chip.title.split(/\s+/)[0]?.slice(0, 9) ?? chip.title}
             </span>
           </button>
         );

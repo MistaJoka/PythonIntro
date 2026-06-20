@@ -58,8 +58,8 @@ export function ReviewPage() {
 
   return (
     <div className="review-page">
-      <TacticalBrief msgType="FRAGO" sector="TRG-REV">
-        Spaced-repetition protocol — items flagged for retraining or overdue per SRS schedule.
+      <TacticalBrief>
+        Spaced repetition — items you've missed or that are due per the SRS schedule.
       </TacticalBrief>
       {tagFilter && (
         <p className="tag-filter-banner">

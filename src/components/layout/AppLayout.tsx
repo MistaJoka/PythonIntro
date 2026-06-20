@@ -1,9 +1,16 @@
-import { Outlet } from 'react-router-dom';
+import { NavLink, Outlet } from 'react-router-dom';
 import { CommandRail } from './CommandRail';
 import { HudHeader } from './HudHeader';
-import { NatoClassStrip } from './NatoClassStrip';
 import { StatusBar } from './StatusBar';
 import { useRailCollapsed } from '../../hooks/useRailCollapsed';
+
+const MOBILE_NAV = [
+  { to: '/',          label: 'Home',     glyph: '⊕', end: true  },
+  { to: '/practice',  label: 'Practice', glyph: '⚡', end: false },
+  { to: '/review',    label: 'Review',   glyph: '↻', end: false },
+  { to: '/capstones', label: 'Projects', glyph: '◆', end: false },
+  { to: '/exam-prep', label: 'Exams',    glyph: '◎', end: false },
+] as const;
 
 export function AppLayout() {
   const { collapsed, toggle } = useRailCollapsed();
@@ -16,7 +23,6 @@ export function AppLayout() {
         <div className="ambient-scanline" />
       </div>
 
-      <NatoClassStrip />
       <HudHeader />
       <CommandRail collapsed={collapsed} onToggle={toggle} />
 
@@ -27,6 +33,20 @@ export function AppLayout() {
       </main>
 
       <StatusBar />
+
+      <nav className="mobile-bottom-nav" aria-label="Mobile navigation">
+        {MOBILE_NAV.map(({ to, label, glyph, end }) => (
+          <NavLink
+            key={to}
+            to={to}
+            end={end}
+            className={({ isActive }) => `mobile-nav-item${isActive ? ' active' : ''}`}
+          >
+            <span className="mobile-nav-glyph" aria-hidden="true">{glyph}</span>
+            <span className="mobile-nav-label">{label}</span>
+          </NavLink>
+        ))}
+      </nav>
     </div>
   );
 }

@@ -102,11 +102,11 @@ export function ExecutionTraceView({
               className={`trace-explore-badge${allVisited ? ' complete' : ''}`}
               title={
                 allVisited
-                  ? 'All steps explored — answer unlocked'
-                  : `Explore ${steps.length - visited.size} more step(s) to unlock the answer`
+                  ? 'All steps traced — answer available'
+                  : `Trace ${steps.length - visited.size} more step(s) to see the answer`
               }
             >
-              {allVisited ? 'Unlocked' : `${visited.size}/${steps.length}`}
+              {allVisited ? 'Ready' : `${visited.size}/${steps.length}`}
             </span>
           )}
           <button
