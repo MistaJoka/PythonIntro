@@ -755,8 +755,7 @@ details.rail-modules > summary::-webkit-details-marker {
   margin: 0;
   font-size: 1.1rem;
   font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
 }
 
 .lesson-header.browse-header .lesson-subtitle {
@@ -1047,7 +1046,7 @@ details.rail-modules > summary::-webkit-details-marker {
   justify-content: space-between;
   font-size: 0.65rem;
   font-weight: 600;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--text-subtle);
   margin-bottom: 0.35rem;
@@ -1947,7 +1946,7 @@ details.rail-modules > summary::-webkit-details-marker {
   margin: 0;
   font-size: 0.68rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--cyan);
 }
