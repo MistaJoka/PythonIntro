@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('execution trace', () => {
   test('lesson shows one trace panel with step navigation', async ({ page }) => {
     await page.goto('/lesson/lesson01');
-    await expect(page.getByRole('tab', { name: 'Engage' })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Practice' })).toBeVisible();
 
     await expect(page.getByText('Execution trace')).toHaveCount(1);
     await expect(page.getByRole('button', { name: 'Live trace this code' })).toHaveCount(0);

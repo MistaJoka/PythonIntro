@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('lesson flow', () => {
   test('submit a trace-steps example in focus mode', async ({ page }) => {
     await page.goto('/lesson/lesson01');
-    await expect(page.getByRole('tab', { name: 'Engage' })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Practice' })).toBeVisible();
 
     for (let step = 0; step < 3; step += 1) {
       await page.getByRole('button', { name: 'Next step' }).click();
@@ -21,7 +21,7 @@ test.describe('lesson flow', () => {
 test.describe('capstone flow', () => {
   test('capstone editor loads with run controls and persists code', async ({ page }) => {
     await page.goto('/capstones/cap-01');
-    await expect(page.getByRole('heading', { name: 'Capstone Workspace' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Project Workspace' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Your work' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Run' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Tests' })).toBeVisible();
