@@ -28,6 +28,15 @@ export const MISTAKE_TAGS = [
   'unpacking',
   'typeHints',
   'patternMatch',
+  // --- ML bridge tier (CAI 2100C) ---
+  'vectorization',
+  'viewVsCopy',
+  'axisConfusion',
+  'labelLeakage',
+  'unscaledFeatures',
+  'overfitting',
+  'trainTestSplit',
+  'dataFrameIndexing',
 ] as const;
 
 export type MistakeTag = (typeof MISTAKE_TAGS)[number];
@@ -55,6 +64,14 @@ const baseExample = z.object({
   prompt: z.string(),
   explanation: z.string(),
   trapNote: z.string().optional(),
+  /**
+   * Pyodide packages this example needs (e.g. ['pandas']). Loaded on demand so
+   * only ML-bridge content pays the wheel download — the Intro lessons omit it
+   * and are unaffected. Validated against pyodide-lock.json in CI by
+   * scripts/validate-content.ts, so a typo fails the build rather than the
+   * learner's first RUN.
+   */
+  requires: z.array(z.string()).optional(),
 });
 
 export const traceStepsExampleSchema = baseExample.extend({
