@@ -15,6 +15,7 @@ import { lesson13 } from './lessons/lesson13';
 import { lesson14 } from './lessons/lesson14';
 import { lesson15 } from './lessons/lesson15';
 import { lesson16 } from './lessons/lesson16';
+import { ml01 } from './ml/ml01';
 import { examFinal01, examFinal02, examFinal03 } from './examSets/finals';
 import type { ExamSet } from './examSets/schema';
 import { mergeLessonExtras } from './lessonExtras';
@@ -26,6 +27,19 @@ export { CAPSTONE_PROJECTS, getCapstoneById, validateCapstones } from './capston
 export type { CapstoneProject } from './capstones/schema';
 import { CHALLENGE_BUNDLES } from './challenges/bundles';
 import { challengeBundleSchema, type ChallengeBundle } from './challenges/schema';
+
+/**
+ * The CAI 2100C bridge tier — Intro Python carried forward into pandas/NumPy/
+ * scikit-learn.
+ *
+ * Deliberately a separate tier rather than extra entries in ALL_LESSONS, for
+ * two reasons the test suite already encodes: the course is exactly 16 lessons
+ * (progress + registry tests assert it), and every one of those carries a
+ * challenge concept the bridge lessons have no reason to. It is likewise absent
+ * from capstones/lessonIndex's COURSE_LESSONS, whose length pins the
+ * lessonCoverage map on all 18 capstones.
+ */
+export const ML_LESSONS: Lesson[] = [ml01];
 
 const ALL_LESSONS: Lesson[] = [
   lesson01,
@@ -122,7 +136,7 @@ export function getExamSetById(id: string): ExamSet | undefined {
 }
 
 export function getExampleById(id: string): { example: Example; lessonId: string } | undefined {
-  for (const lesson of ALL_LESSONS) {
+  for (const lesson of [...ALL_LESSONS, ...ML_LESSONS]) {
     for (const concept of lesson.concepts) {
       const ex = concept.examples.find((e) => e.id === id);
       if (ex) return { example: ex, lessonId: lesson.id };
@@ -149,9 +163,17 @@ export function getChallengeBundleById(id: string): ChallengeBundle | undefined 
   return CHALLENGE_BUNDLES.find((b) => b.id === id);
 }
 
-export function getAllExamples(): Example[] {
+export function getMlLessons(): Lesson[] {
+  return ML_LESSONS;
+}
+
+export function getMlLessonById(id: string): Lesson | undefined {
+  return ML_LESSONS.find((l) => l.id === id);
+}
+
+function collectLessonExamples(lessons: Lesson[]): Example[] {
   const out: Example[] = [];
-  for (const lesson of ALL_LESSONS) {
+  for (const lesson of lessons) {
     for (const concept of lesson.concepts) {
       out.push(...concept.examples);
     }
@@ -160,9 +182,13 @@ export function getAllExamples(): Example[] {
   return out;
 }
 
+export function getAllExamples(): Example[] {
+  return [...collectLessonExamples(ALL_LESSONS), ...collectLessonExamples(ML_LESSONS)];
+}
+
 export function validateAllLessons(): { ok: boolean; errors: string[] } {
   const errors: string[] = [];
-  for (const lesson of ALL_LESSONS) {
+  for (const lesson of [...ALL_LESSONS, ...ML_LESSONS]) {
     const result = lessonSchema.safeParse(lesson);
     if (!result.success) {
       errors.push(`${lesson.id}: ${result.error.message}`);
