@@ -10,6 +10,7 @@
  */
 import { describe, it, expect, beforeAll } from 'vitest';
 import { fileURLToPath } from 'node:url';
+import { readFile } from 'node:fs/promises';
 import {
   runCodeChallenge,
   getPyodide,
@@ -28,6 +29,24 @@ function challenge(id: string) {
   if (ex.type !== 'codeChallenge') throw new Error(`example ${id} is ${ex.type}, not codeChallenge`);
   return ex;
 }
+
+describe('every requires-declaring challenge is wired to load its packages', () => {
+  /*
+   * Regression guard. runCodeChallenge/runPython take `requires` as an optional
+   * third argument, so a call site that forgets it still compiles and still
+   * passes every engine-level test — then fails in the browser with
+   * "ModuleNotFoundError: No module named 'pandas'". That is exactly what
+   * happened. Assert the editor components forward the field.
+   */
+  it('CodeChallengeEditor forwards example.requires to both RUN and CHECK', async () => {
+    const source = await readFile(
+      fileURLToPath(new URL('../src/components/examples/CodeChallengeEditor.tsx', import.meta.url)),
+      'utf8',
+    );
+    expect(source).toContain('runCodeChallenge(code, example.tests, example.requires ?? [])');
+    expect(source).toContain('runPython(code, example.requires ?? [])');
+  });
+});
 
 describe('ML bridge content is solvable', () => {
   beforeAll(async () => {

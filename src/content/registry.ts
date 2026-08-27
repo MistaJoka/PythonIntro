@@ -127,8 +127,14 @@ export function getAllLessons(): Lesson[] {
   return ALL_LESSONS;
 }
 
+/**
+ * Resolves across both tiers, so /lesson/ml01 renders through the very same
+ * route and components as /lesson/lesson04 — adding bridge content needs no UI
+ * code. getAllLessons() stays Intro-only, which is what the course-shaped
+ * surfaces (dashboard counts, readiness, the 16-lesson invariant) rely on.
+ */
 export function getLessonById(id: string): Lesson | undefined {
-  return ALL_LESSONS.find((l) => l.id === id);
+  return ALL_LESSONS.find((l) => l.id === id) ?? ML_LESSONS.find((l) => l.id === id);
 }
 
 export function getExamSetById(id: string): ExamSet | undefined {

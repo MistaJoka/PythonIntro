@@ -47,7 +47,7 @@ export function CodeChallengeEditor({
     setFeedback(null);
     setHumanized(undefined);
     try {
-      const result = await runPython(code);
+      const result = await runPython(code, example.requires ?? []);
       setStdout(result.stdout);
       setStderr(result.stderr);
       if (result.error) {
@@ -60,7 +60,7 @@ export function CodeChallengeEditor({
     } finally {
       setRunning(false);
     }
-  }, [code]);
+  }, [code, example.requires]);
 
   const handleTrace = useCallback(async () => {
     setTracing(true);
@@ -85,7 +85,7 @@ export function CodeChallengeEditor({
     const attemptNum = attempts + 1;
     setAttempts(attemptNum);
     try {
-      const result = await runCodeChallenge(code, example.tests);
+      const result = await runCodeChallenge(code, example.tests, example.requires ?? []);
       setFeedback(result.feedback);
       setHumanized(result.humanized);
       setPassed(result.correct);
@@ -98,7 +98,7 @@ export function CodeChallengeEditor({
     } finally {
       setTesting(false);
     }
-  }, [attempts, code, example.tests, onResult]);
+  }, [attempts, code, example.tests, example.requires, onResult]);
 
   const showTrap = !passed && attempts >= 1 && trapNote;
   const showTestHint = !passed && attempts >= 2 && example.tests[0];

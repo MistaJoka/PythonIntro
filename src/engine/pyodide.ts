@@ -141,10 +141,26 @@ export async function getPyodide(): Promise<PyodideInterface> {
   return pyodidePromise;
 }
 
-export async function runPython(userCode: string): Promise<RunPythonResult> {
+export async function runPython(
+  userCode: string,
+  requires: string[] = [],
+): Promise<RunPythonResult> {
   try {
     const pyodide = await getPyodide();
     await ensureRunPythonHelper(pyodide);
+    if (requires.length > 0) {
+      try {
+        await ensurePackages(requires);
+      } catch (err) {
+        const raw = parsePythonException(err);
+        return {
+          stdout: '',
+          stderr: '',
+          error: raw,
+          humanized: humanizePackageLoadError(raw, requires),
+        };
+      }
+    }
     pyodide.globals.set('_run_user_source', userCode);
     const jsonStr = await pyodide.runPythonAsync(`
 import json
