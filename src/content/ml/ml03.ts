@@ -83,8 +83,8 @@ export const ml03: Lesson = {
             },
           ],
           question: 'What shape does out have?',
-          options: ['(2, 3)', '(3, 2)', '(3,)', 'It raises a shape mismatch error'],
-          answerIndex: 0,
+          options: ['(3, 2)', '(2, 3)', '(3,)', 'It raises a shape mismatch error'],
+          answerIndex: 1,
           explanation:
             'Broadcasting compares shapes from the right. (3,) becomes (1, 3), then every size-1 ' +
             'dimension stretches to match: (1, 3) and (2, 1) both become (2, 3). Nothing is copied ' +
@@ -127,12 +127,12 @@ export const ml03: Lesson = {
             'grid is a 2-D array with shape (3, 4) — 3 rows, 4 columns.\n' +
             'What does grid.sum(axis=0) return?',
           options: [
-            '4 numbers — one column total per column',
             '3 numbers — one row total per row',
             'A single number — the grand total',
+            '4 numbers — one column total per column',
             'A (3, 4) array of running totals',
           ],
-          answerIndex: 0,
+          answerIndex: 2,
           explanation:
             'axis names the dimension being collapsed, not the one you keep. axis=0 collapses the ' +
             'rows, leaving one value per column. Reading it as "which axis disappears" removes the ' +
@@ -195,12 +195,12 @@ export const ml03: Lesson = {
             'sit mostly upper-right but a clear handful sit among the blue. What does that tell ' +
             'you before you train anything?',
           options: [
-            'The two features carry real signal, but cannot separate the classes perfectly',
             'The features are useless and should be replaced',
             'The data is mislabelled and needs cleaning',
             'A model will reach 100% accuracy on this data',
+            'The two features carry real signal, but cannot separate the classes perfectly',
           ],
-          answerIndex: 0,
+          answerIndex: 3,
           explanation:
             'Visible-but-imperfect separation is the normal case, and it sets your expectations: ' +
             'a good model here should beat chance clearly while falling well short of perfect. ' +
@@ -218,12 +218,12 @@ export const ml03: Lesson = {
       prompt:
         'arr = np.array([1, 2, 3, 4, 5]); part = arr[1:4]; part[0] = 99.\nWhat is arr now?',
       options: [
-        '[1, 99, 3, 4, 5] — the slice is a view onto the same memory',
         '[1, 2, 3, 4, 5] — the slice is an independent copy',
+        '[1, 99, 3, 4, 5] — the slice is a view onto the same memory',
         '[99, 2, 3, 4, 5] — the first element changes',
         'An error, because slices are read-only',
       ],
-      answerIndex: 0,
+      answerIndex: 1,
       explanation:
         'Basic NumPy slicing returns a view sharing the original buffer, so writing through it ' +
         'mutates the source. Use .copy() when you need independence. (Note this differs from ' +

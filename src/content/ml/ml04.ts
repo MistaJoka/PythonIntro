@@ -39,12 +39,12 @@ export const ml04: Lesson = {
             'You are predicting `fraud` from the transaction table. Which set of columns belongs ' +
             'in X?',
           options: [
-            'amount and failed_attempts',
             'amount, failed_attempts and fraud',
             'id, customer, amount, failed_attempts',
+            'amount and failed_attempts',
             'fraud only',
           ],
-          answerIndex: 0,
+          answerIndex: 2,
           explanation:
             'X holds the evidence available before the answer is known. Including fraud puts the ' +
             'answer in the question. Including id or customer is nearly as bad in a different way: ' +

@@ -35,12 +35,12 @@ export const ml02: Lesson = {
             'A CSV holds `amount` values like 45.50 and 1800.00. You read it with a plain ' +
             'csv.DictReader and try row["amount"] * 2. What happens?',
           options: [
-            'You get "45.5045.50" — the value is a string, and * repeats strings',
             'You get 91.0 — Python converts numeric-looking text automatically',
+            'You get "45.5045.50" — the value is a string, and * repeats strings',
             'A TypeError, because strings cannot be multiplied at all',
             'A ValueError, because the CSV is malformed',
           ],
-          answerIndex: 0,
+          answerIndex: 1,
           explanation:
             'A CSV is plain text; nothing in the format records a type. csv.DictReader hands you ' +
             'strings, and "45.50" * 2 is string repetition. You must convert explicitly. ' +
@@ -80,16 +80,18 @@ export const ml02: Lesson = {
             'That file contains a row where amount is the text INVALID. After ' +
             'pd.read_csv("transactions.csv"), what is df["amount"].dtype?',
           options: [
-            'object — one unparseable value forces the whole column to stay text',
             'float64 — pandas drops the bad value and converts the rest',
             'float64 — pandas stores the bad value as NaN automatically',
+            'str — one unparseable value forces the whole column to stay text',
             'It raises a ValueError while reading',
           ],
-          answerIndex: 0,
+          answerIndex: 2,
           explanation:
             'A column has ONE dtype. pandas will not silently discard data, so a single ' +
-            'unconvertible value keeps the entire column as object (text). This is why an ' +
-            'arithmetic operation can fail on a column that looks numeric in df.head().',
+            'unconvertible value keeps the entire column as text. This is why an arithmetic ' +
+            'operation can fail on a column that looks numeric in df.head(). On pandas 3 that ' +
+            'dtype prints as str; older versions print object for the same situation, so you will ' +
+            'meet both names in the wild.',
           trapNote:
             'df.head() prints 45.50 and INVALID side by side without complaint. Only .dtypes or ' +
             '.info() reveals that none of those numbers are numbers.',

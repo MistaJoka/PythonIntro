@@ -193,12 +193,12 @@ export const ml05: Lesson = {
         'Your analyser reports 0.76 test accuracy, and the hand-written rule scores 0.70 on the ' +
         'same rows. What is the honest conclusion?',
       options: [
-        'The model adds a modest, real improvement over the rule on unseen data',
         'The model is 76% likely to be correct about any future transaction',
         'The rule should be deleted because the model is strictly better',
+        'The model adds a modest, real improvement over the rule on unseen data',
         'The model is overfitting, since 0.76 is well below 1.00',
       ],
-      answerIndex: 0,
+      answerIndex: 2,
       explanation:
         'Accuracy is measured on one held-out sample, so it estimates performance on similar data ' +
         'rather than guaranteeing a per-transaction probability. A six-point gain over a two-line ' +

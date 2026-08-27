@@ -59,18 +59,19 @@ export const ml01: Lesson = {
             '        suspicious.append(t)\n\n' +
             'Which pandas expression asks the same question?',
           options: [
-            'df[(df["amount"] > 1000) & (df["failed_attempts"] >= 3)]',
             'df[df["amount"] > 1000 and df["failed_attempts"] >= 3]',
             'df.filter(amount > 1000, failed_attempts >= 3)',
+            'df[(df["amount"] > 1000) & (df["failed_attempts"] >= 3)]',
             'df.loc[df["amount"] > 1000].append(df["failed_attempts"] >= 3)',
           ],
-          answerIndex: 0,
+          answerIndex: 2,
           explanation:
             'Each condition produces a full column of True/False, and & combines them elementwise. ' +
             'The parentheses are required because & binds tighter than > in Python.',
           trapNote:
-            'Option 2 looks natural but raises ValueError: `and` demands a single True/False, and a ' +
-            'column of 5 booleans is ambiguous. Use & for elementwise, and reserve `and` for scalars.',
+            'The `and` version looks the most natural and is the one that raises: `and` demands a ' +
+            'single True/False, and a column of booleans is ambiguous. Use & for elementwise, and ' +
+            'reserve `and` for scalars.',
         },
         {
           id: 'ml1-c1-e1b',
@@ -104,12 +105,12 @@ export const ml01: Lesson = {
           ],
           question: 'What is mask when the loop finishes?',
           options: [
-            '[False, True, False]',
             '[False, True, True]',
             '[True, True, False]',
+            '[False, True, False]',
             '[False, False, False]',
           ],
-          answerIndex: 0,
+          answerIndex: 2,
           explanation:
             'That list of booleans IS the mask. pandas builds the same thing in one expression — ' +
             '(df["amount"] > 1000) & (df["failed_attempts"] >= 3) — and then uses it to select rows. ' +
@@ -182,12 +183,12 @@ export const ml01: Lesson = {
       tags: ['vectorization'],
       prompt: 'Why does df[df["a"] > 1 and df["b"] > 2] raise a ValueError?',
       options: [
-        '`and` needs one True/False, but each comparison is a whole column of them',
         'pandas does not support more than one condition at a time',
+        '`and` needs one True/False, but each comparison is a whole column of them',
         '`and` only works on integers',
         'The columns must be converted to lists first',
       ],
-      answerIndex: 0,
+      answerIndex: 1,
       explanation:
         'Python\'s `and` calls bool() on its operands. bool() of a multi-element Series is ambiguous — ' +
         'pandas cannot guess whether you meant "any" or "all", so it raises instead. & is elementwise ' +
