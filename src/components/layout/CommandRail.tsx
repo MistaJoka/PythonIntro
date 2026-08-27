@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LESSON_META } from '../../content/registry';
+import { LESSON_META, ML_LESSON_META } from '../../content/registry';
 import { useProgressStore } from '../../store/progress';
 
 const NAV_ITEMS = [
@@ -22,6 +22,7 @@ export function CommandRail({ collapsed, onToggle }: CommandRailProps) {
   const courseProgress = useProgressStore((s) => s.courseProgress);
   const completeCount = LESSON_META.filter((m) => (courseProgress[m.id] ?? 0) === 100).length;
   const total = LESSON_META.length;
+  const mlCompleteCount = ML_LESSON_META.filter((m) => (courseProgress[m.id] ?? 0) === 100).length;
 
   return (
     <aside
@@ -79,6 +80,44 @@ export function CommandRail({ collapsed, onToggle }: CommandRailProps) {
           {LESSON_META.map((meta, index) => {
             const progress = courseProgress[meta.id] ?? 0;
             const num = String(index + 1).padStart(2, '0');
+            return (
+              <li key={meta.id}>
+                <NavLink
+                  to={`/lesson/${meta.id}`}
+                  title={`${meta.title} — ${progress}%`}
+                  className={({ isActive }) =>
+                    `module-link ${meta.hasContent ? '' : 'stub'} ${progress === 100 ? 'complete' : ''} ${isActive ? 'active' : ''}`
+                  }
+                >
+                  <span className="module-num">{num}</span>
+                  <span className="module-info">
+                    <span className="module-title">{meta.title}</span>
+                    <span className="module-track">
+                      <span className="module-fill" style={{ width: `${progress}%` }} />
+                    </span>
+                  </span>
+                  <span className="module-pct">{progress}%</span>
+                </NavLink>
+              </li>
+            );
+          })}
+
+          {/* Bridge tier lives inside the same scroll container as the course
+              modules — a sibling flex section fought the rail's layout and
+              overflowed. Kept visually separate, and counted separately, so the
+              16-module course total stays honest. */}
+          <li className="module-group-label" aria-hidden={collapsed}>
+            <span>{collapsed ? 'ML' : 'ML Bridge'}</span>
+            {!collapsed && (
+              <span className="rail-module-count">
+                {mlCompleteCount}/{ML_LESSON_META.length}
+              </span>
+            )}
+          </li>
+
+          {ML_LESSON_META.map((meta, index) => {
+            const progress = courseProgress[meta.id] ?? 0;
+            const num = `M${index + 1}`;
             return (
               <li key={meta.id}>
                 <NavLink

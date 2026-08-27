@@ -252,7 +252,13 @@ a:hover {
   min-height: 0;
   border-right: 1px solid var(--border);
   background: var(--bg-surface);
-  overflow: hidden;
+  /* The rail owns the scrolling. .module-list used to declare flex:1 +
+     overflow-y:auto, but it sits inside <details>, whose content is wrapped in
+     an anonymous box — so the ul was never the flex item and never got a
+     bounded height. It rendered at full content height and the rail clipped it,
+     leaving the last modules unreachable on a short window. */
+  overflow-y: auto;
+  overflow-x: hidden;
   z-index: 2;
 }
 
@@ -459,6 +465,22 @@ details.rail-modules > summary::-webkit-details-marker {
   display: none;
 }
 
+/* Divider row separating the CAI 2100C bridge tier from the 16 course modules
+   inside the shared scroll container. */
+.module-group-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.6rem;
+  padding: 0.5rem 0.5rem 0.3rem;
+  border-top: 1px solid var(--border-muted);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-subtle);
+}
+
 .rail-module-count {
   font-family: var(--font-code);
   font-size: 0.62rem;
@@ -475,8 +497,8 @@ details.rail-modules > summary::-webkit-details-marker {
   list-style: none;
   margin: 0;
   padding: 0;
-  overflow-y: auto;
-  flex: 1;
+  /* Sizes to its content; the rail scrolls. See .command-rail above. */
+  flex: 0 0 auto;
   scrollbar-width: thin;
 }
 

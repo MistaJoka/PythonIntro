@@ -19,6 +19,7 @@ import { ml01 } from './ml/ml01';
 import { ml02 } from './ml/ml02';
 import { ml03 } from './ml/ml03';
 import { ml04 } from './ml/ml04';
+import { ml05 } from './ml/ml05';
 import { examFinal01, examFinal02, examFinal03 } from './examSets/finals';
 import type { ExamSet } from './examSets/schema';
 import { mergeLessonExtras } from './lessonExtras';
@@ -42,7 +43,7 @@ import { challengeBundleSchema, type ChallengeBundle } from './challenges/schema
  * from capstones/lessonIndex's COURSE_LESSONS, whose length pins the
  * lessonCoverage map on all 18 capstones.
  */
-export const ML_LESSONS: Lesson[] = [ml01, ml02, ml03, ml04];
+export const ML_LESSONS: Lesson[] = [ml01, ml02, ml03, ml04, ml05];
 
 const ALL_LESSONS: Lesson[] = [
   lesson01,
@@ -113,6 +114,15 @@ function mergeInteractiveExtras<T extends { id: string; concepts: { examples: Ex
 export const EXAM_SETS: ExamSet[] = [examFinal01, examFinal02, examFinal03];
 
 export const LESSON_META = ALL_LESSONS.map((l) => ({
+  id: l.id,
+  title: l.title,
+  subtitle: l.subtitle,
+  exampleCount: countLessonExamples(l),
+  hasContent: l.concepts.length > 0,
+}));
+
+/** Rail/nav metadata for the bridge tier, mirroring LESSON_META. */
+export const ML_LESSON_META = ML_LESSONS.map((l) => ({
   id: l.id,
   title: l.title,
   subtitle: l.subtitle,

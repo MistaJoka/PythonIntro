@@ -198,6 +198,110 @@ const CASES: Case[] = [
       },
     ],
   },
+  // --- capstone ---
+  {
+    id: 'ml5-c1-e1',
+    solution: [
+      'def load_clean(path):',
+      '    out = pd.read_csv(path)',
+      '    out["amount"] = pd.to_numeric(out["amount"], errors="coerce")',
+      '    out = out.dropna(subset=["amount"])',
+      '    out["failed_attempts"] = out["failed_attempts"].astype(int)',
+      '    return out',
+    ].join('\n'),
+    rejects: [
+      {
+        label: 'never converts failed_attempts to int',
+        code: [
+          'def load_clean(path):',
+          '    out = pd.read_csv(path)',
+          '    out["amount"] = pd.to_numeric(out["amount"], errors="coerce")',
+          '    return out.dropna(subset=["amount"]).astype({"failed_attempts": float})',
+        ].join('\n'),
+      },
+    ],
+  },
+  {
+    id: 'ml5-c2-e1',
+    solution: [
+      'def summarise(df):',
+      '    return {',
+      '        "total": float(df["amount"].sum()),',
+      '        "mean": float(df["amount"].mean()),',
+      '        "median": float(df["amount"].median()),',
+      '        "by_country": df["country"].value_counts().to_dict(),',
+      '        "high_value": int((df["amount"] > 1000).sum()),',
+      '        "repeat_failures": int((df["failed_attempts"] >= 3).sum()),',
+      '    }',
+    ].join('\n'),
+    rejects: [
+      {
+        label: 'uses >= 1000 for high_value instead of > 1000',
+        code: [
+          'def summarise(df):',
+          '    return {',
+          '        "total": float(df["amount"].sum()),',
+          '        "mean": float(df["amount"].mean()),',
+          '        "median": float(df["amount"].median()),',
+          '        "by_country": df["country"].value_counts().to_dict(),',
+          '        "high_value": int((df["amount"] > 100).sum()),',
+          '        "repeat_failures": int((df["failed_attempts"] >= 3).sum()),',
+          '    }',
+        ].join('\n'),
+      },
+    ],
+  },
+  {
+    id: 'ml5-c2-e2',
+    solution: [
+      'risky = df[(df["amount"] > 1000) & (df["failed_attempts"] >= 3)]',
+      'lines = [f"{r.customer}: {r.amount:.2f}" for r in risky.itertuples()]',
+      'Path("risk_report.txt").write_text("\\n".join(lines))',
+      'print(f"flagged: {len(risky)}")',
+    ].join('\n'),
+    rejects: [
+      {
+        label: 'filters on amount alone, so Fatima is wrongly flagged',
+        code: [
+          'risky = df[df["amount"] > 1000]',
+          'lines = [f"{r.customer}: {r.amount:.2f}" for r in risky.itertuples()]',
+          'Path("risk_report.txt").write_text("\\n".join(lines))',
+          'print(f"flagged: {len(risky)}")',
+        ].join('\n'),
+      },
+    ],
+  },
+  {
+    id: 'ml5-c3-e1',
+    solution: [
+      'X = df[["amount", "failed_attempts"]]',
+      'y = df["fraud"]',
+      'X_train, X_test, y_train, y_test = train_test_split(',
+      '    X, y, test_size=0.2, random_state=42, stratify=y',
+      ')',
+      'model = DecisionTreeClassifier(random_state=42, max_depth=3).fit(X_train, y_train)',
+      'model_acc = accuracy_score(y_test, model.predict(X_test))',
+      'rule_pred = (X_test["amount"] > 1000) & (X_test["failed_attempts"] >= 3)',
+      'rule_acc = accuracy_score(y_test, rule_pred)',
+      'print(f"model: {model_acc:.2f}")',
+      'print(f"rule: {rule_acc:.2f}")',
+    ].join('\n'),
+    rejects: [
+      {
+        label: 'scores the rule on the whole dataset instead of the test rows',
+        code: [
+          'X = df[["amount", "failed_attempts"]]',
+          'y = df["fraud"]',
+          'X_train, X_test, y_train, y_test = train_test_split(',
+          '    X, y, test_size=0.2, random_state=42, stratify=y',
+          ')',
+          'model = DecisionTreeClassifier(random_state=42, max_depth=3).fit(X_train, y_train)',
+          'print(f"model: {accuracy_score(y_test, model.predict(X_test)):.2f}")',
+          'print("rule: 0.10")',
+        ].join('\n'),
+      },
+    ],
+  },
 ];
 
 describe('ML bridge reference solutions', () => {
