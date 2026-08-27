@@ -1,5 +1,51 @@
 import { MISTAKE_TAGS, type MistakeTag } from '../content/schema';
-import { getAllExamples } from '../content/registry';
+import { getAllExamples, ML_LESSONS } from '../content/registry';
+
+export interface BridgeSkillReadiness {
+  id: string;
+  title: string;
+  completed: number;
+  total: number;
+  pct: number;
+}
+
+/**
+ * Per-skill readiness for the CAI 2100C bridge tier.
+ *
+ * Derived strictly from examples actually answered correctly — never a
+ * self-assessed or arbitrary figure — so a bar can only move by doing the work.
+ * An untouched lesson reports 0 rather than being hidden, because "not started"
+ * is the most useful thing a readiness screen can say.
+ */
+export function computeBridgeReadiness(
+  examples: Record<string, { correct: boolean }>,
+): BridgeSkillReadiness[] {
+  return ML_LESSONS.map((lesson) => {
+    const ids = [
+      ...lesson.concepts.flatMap((c) => c.examples.map((e) => e.id)),
+      ...lesson.lessonCheck.map((e) => e.id),
+    ];
+    const completed = ids.filter((id) => examples[id]?.correct).length;
+    const total = ids.length;
+    return {
+      id: lesson.id,
+      title: lesson.title,
+      completed,
+      total,
+      pct: total > 0 ? Math.round((completed / total) * 100) : 0,
+    };
+  });
+}
+
+/** Overall bridge readiness — the share of all bridge examples answered correctly. */
+export function computeBridgeReadinessScore(
+  examples: Record<string, { correct: boolean }>,
+): number {
+  const skills = computeBridgeReadiness(examples);
+  const total = skills.reduce((n, s) => n + s.total, 0);
+  const completed = skills.reduce((n, s) => n + s.completed, 0);
+  return total > 0 ? Math.round((completed / total) * 100) : 0;
+}
 
 interface ReadinessInput {
   examples: Record<string, { correct: boolean; tags: MistakeTag[] }>;

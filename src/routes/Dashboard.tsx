@@ -9,7 +9,12 @@ import {
 import { CoverageHeatmap } from '../components/CoverageHeatmap';
 import { TacticalBrief } from '../components/layout/TacticalBrief';
 import { getWeakestTagForDashboard } from '../engine/tagStats';
-import { computeReadinessScore, exportAnkiCsv } from '../engine/readiness';
+import {
+  computeReadinessScore,
+  computeBridgeReadiness,
+  computeBridgeReadinessScore,
+  exportAnkiCsv,
+} from '../engine/readiness';
 
 export function DashboardPage() {
   const exportProgress = useProgressStore((s) => s.exportProgress);
@@ -25,6 +30,8 @@ export function DashboardPage() {
 
   const readiness = computeReadinessScore({ examples, lessonChecks, diagnostic });
   const weakestTag = getWeakestTagForDashboard(examples);
+  const bridgeSkills = computeBridgeReadiness(examples);
+  const bridgeScore = computeBridgeReadinessScore(examples);
 
   const handleImport = (text: string) => {
     const ok = importProgress(text);
@@ -67,6 +74,28 @@ export function DashboardPage() {
         </p>
       )}
       <CoverageHeatmap />
+
+      <h2>CAI 2100C readiness</h2>
+      <p className="readiness-note">
+        Derived from bridge exercises answered correctly — {bridgeScore}% overall. Nothing here is
+        self-assessed; a bar moves only when you pass the work behind it.
+      </p>
+      <ul className="readiness-list">
+        {bridgeSkills.map((skill) => (
+          <li key={skill.id}>
+            <Link to={`/lesson/${skill.id}`} className="readiness-name">
+              {skill.title}
+            </Link>
+            <span className="readiness-track" aria-hidden="true">
+              <span className="readiness-fill" style={{ width: `${skill.pct}%` }} />
+            </span>
+            <span className="readiness-pct">
+              {skill.completed}/{skill.total}
+            </span>
+          </li>
+        ))}
+      </ul>
+
       <h2>Module status</h2>
       <ul className="progress-list">
         {Object.entries(courseProgress)

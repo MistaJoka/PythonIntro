@@ -49,6 +49,51 @@ export const ml03: Lesson = {
             'The same split applies to +: lists concatenate, arrays add elementwise.',
         },
         {
+          id: 'ml3-c1-e1b',
+          type: 'traceSteps',
+          stage: 'see',
+          tags: ['vectorization', 'axisConfusion'],
+          prompt:
+            'Broadcasting is the rule that lets differently-shaped arrays combine. Step through it ' +
+            'and watch the shapes line up.',
+          code: [
+            'import numpy as np',
+            '',
+            'row = np.array([1, 2, 3])',
+            'col = np.array([[10], [20]])',
+            'out = row + col',
+          ].join('\n'),
+          steps: [
+            { line: 3, vars: { row: 'array([1, 2, 3])', 'row.shape': '(3,)' } },
+            { line: 4, vars: { col: 'array([[10], [20]])', 'col.shape': '(2, 1)' } },
+            {
+              line: 5,
+              vars: { 'row.shape': '(3,)  -> (1, 3)' },
+              note: 'Shapes are compared right to left; row gains a leading 1.',
+            },
+            {
+              line: 5,
+              vars: { 'result.shape': '(2, 3)' },
+              note: 'Each size-1 dimension stretches: rows to 2, columns to 3.',
+            },
+            {
+              line: 5,
+              vars: { out: 'array([[11, 12, 13],\n       [21, 22, 23]])' },
+              note: 'row is added to each row of col — no loop was written.',
+            },
+          ],
+          question: 'What shape does out have?',
+          options: ['(2, 3)', '(3, 2)', '(3,)', 'It raises a shape mismatch error'],
+          answerIndex: 0,
+          explanation:
+            'Broadcasting compares shapes from the right. (3,) becomes (1, 3), then every size-1 ' +
+            'dimension stretches to match: (1, 3) and (2, 1) both become (2, 3). Nothing is copied ' +
+            'in memory — NumPy simply reuses the values.',
+          trapNote:
+            'Two shapes are compatible only where each dimension matches or one of them is 1. ' +
+            '(3,) with (2,) is neither, and raises.',
+        },
+        {
           id: 'ml3-c1-e2',
           type: 'codeChallenge',
           stage: 'build',

@@ -73,6 +73,52 @@ export const ml01: Lesson = {
             'column of 5 booleans is ambiguous. Use & for elementwise, and reserve `and` for scalars.',
         },
         {
+          id: 'ml1-c1-e1b',
+          type: 'traceSteps',
+          stage: 'see',
+          tags: ['vectorization', 'loopLogic'],
+          prompt:
+            'Before trusting the one-liner, watch the loop pandas replaces. Step through it and ' +
+            'see the mask fill in.',
+          code: [
+            'amounts = [45.50, 1800.00, 3200.00]',
+            'failed = [0, 4, 1]',
+            'mask = []',
+            'for a, f in zip(amounts, failed):',
+            '    mask.append(a > 1000 and f >= 3)',
+          ].join('\n'),
+          steps: [
+            { line: 1, vars: { amounts: '[45.5, 1800.0, 3200.0]' } },
+            { line: 2, vars: { failed: '[0, 4, 1]' } },
+            { line: 3, vars: { mask: '[]' } },
+            { line: 4, vars: { a: '45.5', f: '0' }, note: 'First row: small amount, no failures.' },
+            { line: 5, vars: { mask: '[False]' }, note: '45.5 > 1000 is False, so the AND is False.' },
+            { line: 4, vars: { a: '1800.0', f: '4' }, note: 'Second row: large amount, 4 failures.' },
+            { line: 5, vars: { mask: '[False, True]' }, note: 'Both halves hold, so True.' },
+            { line: 4, vars: { a: '3200.0', f: '1' }, note: 'Third row: largest amount — but only 1 failure.' },
+            {
+              line: 5,
+              vars: { mask: '[False, True, False]' },
+              note: 'Amount passes, failures do not. The AND rejects it.',
+            },
+          ],
+          question: 'What is mask when the loop finishes?',
+          options: [
+            '[False, True, False]',
+            '[False, True, True]',
+            '[True, True, False]',
+            '[False, False, False]',
+          ],
+          answerIndex: 0,
+          explanation:
+            'That list of booleans IS the mask. pandas builds the same thing in one expression — ' +
+            '(df["amount"] > 1000) & (df["failed_attempts"] >= 3) — and then uses it to select rows. ' +
+            'Seeing the third row rejected is the point: the largest amount in the set is not risky, ' +
+            'because the failure count vetoes it.',
+          trapNote:
+            'Row three is the one worth remembering. A filter on amount alone would have flagged it.',
+        },
+        {
           id: 'ml1-c1-e2',
           type: 'codeChallenge',
           stage: 'build',

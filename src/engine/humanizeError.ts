@@ -41,10 +41,107 @@ function matchType(raw: string): HumanizedError | null {
   };
 }
 
+/**
+ * Errors specific to the ML bridge tier (pandas / NumPy / scikit-learn).
+ *
+ * These are checked before the generic handlers because the generic message for
+ * each is actively unhelpful here: "Invalid value" tells a learner nothing about
+ * why `and` failed on a Series, and the raw sklearn shape error is a wall of
+ * numbers. The real traceback is still carried in `raw` and shown under
+ * "Show details" — this only changes the first thing they read.
+ */
+function matchDataScience(raw: string): HumanizedError | null {
+  // The single most common pandas error: `and`/`or` on a boolean Series.
+  if (raw.includes('truth value of a') && raw.includes('ambiguous')) {
+    return {
+      short: 'Used `and` / `or` on a whole column',
+      friendly:
+        'A comparison like df["a"] > 1 produces a whole column of True/False values, and `and` ' +
+        'needs a single one. Use & for "and", | for "or", and wrap each comparison in its own ' +
+        'parentheses: df[(df["a"] > 1) & (df["b"] < 2)].',
+      raw,
+    };
+  }
+
+  const missingModule = raw.match(/ModuleNotFoundError: No module named '([^']+)'/);
+  if (missingModule) {
+    return {
+      short: `${missingModule[1]} is not loaded`,
+      friendly:
+        `This challenge did not declare '${missingModule[1]}' as one of its required packages, ` +
+        'so it was never downloaded. That is a fault in the exercise rather than in your code — ' +
+        'the import itself is correct.',
+      raw,
+    };
+  }
+
+  // sklearn: X and y row counts disagree, almost always a mis-ordered split.
+  if (raw.includes('Found input variables with inconsistent numbers of samples')) {
+    return {
+      short: 'X and y have different row counts',
+      friendly:
+        'The features and the target must line up row for row. This usually means the four ' +
+        'results of train_test_split were unpacked in the wrong order — it returns ' +
+        'X_train, X_test, y_train, y_test, in that order.',
+      raw,
+    };
+  }
+
+  if (raw.includes('Expected 2D array, got 1D array instead')) {
+    return {
+      short: 'Features must be 2-D',
+      friendly:
+        'scikit-learn expects X as a table with one row per sample, even when there is a single ' +
+        'feature. df[["amount"]] (double brackets) gives a DataFrame; df["amount"] gives a 1-D ' +
+        'Series, which is why the shape is wrong.',
+      raw,
+    };
+  }
+
+  if (raw.includes('could not convert string to float')) {
+    return {
+      short: 'A text value reached a numeric operation',
+      friendly:
+        'Some value in the column is not a number — CSV values arrive as text, and one bad entry ' +
+        'keeps the whole column as text. Inspect it with df.dtypes, then convert with ' +
+        'pd.to_numeric(col, errors="coerce"), which turns unparseable values into NaN instead of ' +
+        'raising.',
+      raw,
+    };
+  }
+
+  // KeyError from a DataFrame column reads identically to a dict KeyError, but
+  // the fix is different — point at the column list rather than dict keys.
+  const columnKey = raw.match(/KeyError: ['"]([^'"]+)['"]/);
+  if (columnKey && /\b(df|DataFrame|frame)\b/.test(raw)) {
+    return {
+      short: `No column named '${columnKey[1]}'`,
+      friendly:
+        `The DataFrame has no column '${columnKey[1]}'. Print df.columns to see the real names — ` +
+        'a stray space or different capitalisation is the usual cause.',
+      raw,
+    };
+  }
+
+  if (raw.includes('SettingWithCopyWarning')) {
+    return {
+      short: 'Modifying a filtered frame',
+      friendly:
+        'You are writing to a frame that came from a filter. Under pandas 3 that copy is already ' +
+        'independent, so the parent is safe — but call .copy() explicitly to make the intent clear ' +
+        'and to keep the behaviour the same on older versions.',
+      raw,
+    };
+  }
+
+  return null;
+}
+
 export function humanizePythonError(raw: string): HumanizedError {
   const line = extractExceptionLine(raw);
 
   return (
+    matchDataScience(raw) ??
     matchName(raw) ??
     matchName(line) ??
     (raw.includes('SyntaxError') || line.includes('SyntaxError')
