@@ -42,10 +42,10 @@ describe('progress store', () => {
     expect(entry?.code).toContain('inspect');
   });
 
-  it('tracks progress for all 16 lessons', () => {
+  it('tracks progress for all 17 lessons', () => {
     useProgressStore.getState().recordAttempt('l1-c1-e1', 'lesson01', [], true);
     const keys = Object.keys(useProgressStore.getState().courseProgress);
-    expect(keys).toContain('lesson16');
-    expect(keys.length).toBe(16);
+    expect(keys).toContain('lesson17');
+    expect(keys.length).toBe(17);
   });
 });

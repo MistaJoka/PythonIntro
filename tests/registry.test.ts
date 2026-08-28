@@ -18,8 +18,8 @@ describe('content registry', () => {
     expect(ok, errors.join('\n')).toBe(true);
   });
 
-  it('has 16 lessons', () => {
-    expect(getAllLessons()).toHaveLength(16);
+  it('has 17 lessons', () => {
+    expect(getAllLessons()).toHaveLength(17);
   });
 
   it('has Phase 1 content in lessons 1-3', () => {

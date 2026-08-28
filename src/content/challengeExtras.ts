@@ -1493,4 +1493,136 @@ export const CHALLENGE_EXTRAS: Record<string, Example[]> = {
         'The same generator object g is drained by the first list(g), yielding [1, 2] and exhausting it. Generators do not reset, so the second list(g) yields nothing and second is []. The lines are [1, 2] then []. The trap answer [1, 2] then [1, 2] assumes the generator restarts.',
     },
   ],
+  lesson17: [
+    {
+      id: 'l17-chal-1',
+      type: 'codeChallenge',
+      stage: 'stretch',
+      tags: ['mutation', 'exceptionType'],
+      prompt:
+        'Transactions, for real. Write transfer(con, src, dst, amount) that moves money between two ' +
+        'customers atomically: if the source lacks the funds, raise ValueError and leave BOTH balances ' +
+        'untouched. The table customers(name TEXT, balance REAL) already exists.',
+      starterCode:
+        'import sqlite3\n\n' +
+        'con = sqlite3.connect(":memory:")\n' +
+        'con.execute("CREATE TABLE customers (name TEXT PRIMARY KEY, balance REAL)")\n' +
+        'con.executemany("INSERT INTO customers VALUES (?, ?)", [("Alice", 100.0), ("Bob", 50.0)])\n' +
+        'con.commit()\n\n\n' +
+        'def transfer(con, src, dst, amount):\n' +
+        '    # Debit src, credit dst. Insufficient funds must change nothing.\n' +
+        '    pass\n',
+      tests: [
+        'def _bal(n): return con.execute("SELECT balance FROM customers WHERE name = ?", (n,)).fetchone()[0]',
+        'transfer(con, "Alice", "Bob", 30.0)',
+        'assert abs(_bal("Alice") - 70.0) < 0.01, f"Alice should be 70.0, got {_bal(\'Alice\')}"',
+        'assert abs(_bal("Bob") - 80.0) < 0.01, f"Bob should be 80.0, got {_bal(\'Bob\')}"',
+        '_before = (_bal("Alice"), _bal("Bob"))',
+        '_raised = False',
+        'try:\n    transfer(con, "Alice", "Bob", 10_000.0)\nexcept ValueError:\n    _raised = True',
+        'assert _raised, "an overdraft must raise ValueError"',
+        'assert (_bal("Alice"), _bal("Bob")) == _before, f"a failed transfer must leave balances unchanged; got {(_bal(\'Alice\'), _bal(\'Bob\'))} vs {_before}"',
+      ],
+      solutionHint:
+        'Read the source balance first and raise before touching anything if it is too low. If you debit ' +
+        'first, you must con.rollback() on the failure path — otherwise the debit survives.',
+      explanation:
+        'Atomicity is the point: a partial transfer that debits without crediting is worse than no ' +
+        'transfer. Checking before writing is the simplest correct approach; rolling back after a ' +
+        'partial write is the general one.',
+      trapNote:
+        'Debiting first and then raising leaves the money destroyed unless you roll back. The test ' +
+        'checks both balances after the failure precisely to catch that.',
+    },
+    {
+      id: 'l17-chal-2',
+      type: 'codeChallenge',
+      stage: 'stretch',
+      tags: ['assertLogic', 'dictKeys'],
+      prompt:
+        'Aggregate across a join. Print one line per city as "Miami: 3 customers, 429.74 total", ' +
+        'ordered by total descending. Cities with no customers must not appear.',
+      starterCode:
+        'import sqlite3\n\n' +
+        'con = sqlite3.connect(":memory:")\n' +
+        'cur = con.cursor()\n' +
+        'cur.execute("CREATE TABLE cities (id INTEGER PRIMARY KEY, name TEXT)")\n' +
+        'cur.execute("CREATE TABLE customers (name TEXT, city_id INTEGER, balance REAL)")\n' +
+        'cur.executemany("INSERT INTO cities (name) VALUES (?)", [("Miami",), ("Orlando",), ("Tampa",), ("Naples",)])\n' +
+        'cur.executemany("INSERT INTO customers VALUES (?, ?, ?)", [\n' +
+        '    ("Alice", 1, 120.50), ("Carlos", 1, 220.25), ("Eli", 1, 88.99),\n' +
+        '    ("Bob", 2, 1800.00), ("Dana", 3, 3200.00),\n' +
+        '])\n' +
+        'con.commit()\n\n' +
+        '# Join, group, and print per-city totals highest first.\n',
+      tests: [
+        '_lines = [l for l in _stdout.strip().splitlines() if l.strip()]',
+        'assert len(_lines) == 3, f"Naples has no customers so should be absent; expected 3 lines, got {_lines!r}"',
+        'assert _lines[0].startswith("Tampa"), f"Tampa has the largest total; got {_lines[0]!r}"',
+        'assert "3200.00" in _lines[0], f"expected Tampa total 3200.00; got {_lines[0]!r}"',
+        'assert _lines[1].startswith("Orlando"), f"expected Orlando second; got {_lines[1]!r}"',
+        'assert _lines[2].startswith("Miami"), f"expected Miami third; got {_lines[2]!r}"',
+        'assert "3 customers" in _lines[2], f"Miami has 3 customers; got {_lines[2]!r}"',
+        'assert "429.74" in _lines[2], f"Miami total should be 429.74; got {_lines[2]!r}"',
+        'assert "Naples" not in _stdout, "an INNER JOIN drops cities with no customers — Naples must not appear"',
+      ],
+      solutionHint:
+        'SELECT ci.name, COUNT(*), SUM(cu.balance) FROM customers cu JOIN cities ci ON ci.id = cu.city_id ' +
+        'GROUP BY ci.name ORDER BY SUM(cu.balance) DESC.',
+      explanation:
+        'GROUP BY collapses rows per city; COUNT(*) and SUM() aggregate within each group. A plain JOIN ' +
+        'is an INNER JOIN, so Naples — having no customers — produces no row at all. A LEFT JOIN would ' +
+        'include it with a NULL total.',
+      trapNote:
+        'Any column you SELECT alongside an aggregate must appear in GROUP BY, or you get an arbitrary ' +
+        'row from each group rather than an error.',
+    },
+    {
+      id: 'l17-chal-3',
+      type: 'multipleChoice',
+      stage: 'stretch',
+      tags: ['exceptionType', 'identity'],
+      prompt:
+        'target = "Bob\'; DROP TABLE customers; --"\n' +
+        'cur.execute("DELETE FROM customers WHERE name = ?", (target,))\n\n' +
+        'What happens?',
+      options: [
+        'The customers table is dropped',
+        'A syntax error is raised',
+        'Zero rows are deleted, and the table is fine — the whole string is treated as one name to match',
+        'The row named Bob is deleted and the rest of the string is ignored',
+      ],
+      answerIndex: 2,
+      explanation:
+        'The placeholder sends the value to SQLite separately from the query text, so it can never be ' +
+        'parsed as SQL. The engine simply looks for a customer whose name is that entire literal string, ' +
+        'finds none, and deletes nothing. The same input inside an f-string would have executed the DROP.',
+      trapNote:
+        'This is why "the input is validated upstream" is not a substitute for placeholders. Placeholders ' +
+        'make the class of bug impossible rather than unlikely.',
+    },
+    {
+      id: 'l17-chal-4',
+      type: 'multipleChoice',
+      stage: 'stretch',
+      tags: ['loopLogic', 'assertLogic'],
+      prompt:
+        'You insert 50,000 rows in a loop, calling con.commit() inside the loop after each execute(). ' +
+        'It is extremely slow. Why?',
+      options: [
+        'Each commit forces a durable write to disk, so you pay that cost 50,000 times instead of once',
+        'execute() is slow; commit() is irrelevant',
+        'SQLite cannot handle more than a few thousand rows',
+        'The cursor must be recreated for every row',
+      ],
+      answerIndex: 0,
+      explanation:
+        'A commit ends a transaction and flushes it durably to storage — the expensive part. Batching the ' +
+        'inserts into one transaction and committing once at the end is typically orders of magnitude ' +
+        'faster, and executemany() is better still.',
+      trapNote:
+        'The opposite extreme has its own cost: one enormous transaction holds locks and memory, and a ' +
+        'crash loses all of it. Batching in chunks is the usual compromise.',
+    },
+  ],
 };
