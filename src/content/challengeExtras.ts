@@ -1625,4 +1625,114 @@ export const CHALLENGE_EXTRAS: Record<string, Example[]> = {
         'crash loses all of it. Batching in chunks is the usual compromise.',
     },
   ],
+  lesson18: [
+    {
+      id: 'l18-chal-1',
+      type: 'codeChallenge',
+      stage: 'stretch',
+      tags: ['dataFrameIndexing', 'vectorization'],
+      requires: ['pandas', 'numpy'],
+      prompt:
+        'Reshape wide to long. sales has one column per quarter; melt it so each row is one ' +
+        '(region, quarter, amount), then print the single best region-quarter as "West Q3: 900.00".',
+      starterCode:
+        'import pandas as pd\n\n' +
+        'sales = pd.DataFrame({\n' +
+        '    "region": ["East", "West"],\n' +
+        '    "Q1": [100.0, 400.0],\n' +
+        '    "Q2": [200.0, 300.0],\n' +
+        '    "Q3": [150.0, 900.0],\n' +
+        '})\n\n' +
+        '# Melt to long form, then print the single largest region/quarter.\n',
+      tests: [
+        'assert "West Q3: 900.00" in _stdout, f"the largest cell is West Q3 at 900.00; got: {_stdout!r}"',
+        '_lines = [l for l in _stdout.strip().splitlines() if l.strip()]',
+        'assert len(_lines) == 1, f"print only the single best cell; got {_lines!r}"',
+      ],
+      solutionHint:
+        'pd.melt(sales, id_vars="region", var_name="quarter", value_name="amount"), then use idxmax() ' +
+        'on the amount column to locate the winning row.',
+      explanation:
+        'melt turns columns into rows — the inverse of pivot. Once the data is long, finding the ' +
+        'maximum is a single idxmax() instead of a scan across columns, which is exactly why long ' +
+        'form is the shape most analysis tools expect.',
+      trapNote:
+        'idxmax() returns the INDEX LABEL of the maximum, not the value and not its position. Feed it ' +
+        'to .loc[] to get the row back.',
+    },
+    {
+      id: 'l18-chal-2',
+      type: 'codeChallenge',
+      stage: 'stretch',
+      tags: ['vectorization', 'axisConfusion'],
+      requires: ['numpy'],
+      prompt:
+        'scores is a 4x3 array — 4 students, 3 tests. Without a Python loop, print "best_student: 2" ' +
+        '(the row index with the highest total) and "hardest_test: 1" (the column index with the ' +
+        'lowest mean).',
+      starterCode:
+        'import numpy as np\n\n' +
+        'scores = np.array([\n' +
+        '    [70, 55, 80],\n' +
+        '    [90, 60, 85],\n' +
+        '    [95, 65, 99],\n' +
+        '    [60, 50, 70],\n' +
+        '])\n\n' +
+        '# No loops: which row totals highest, and which column has the lowest mean?\n',
+      tests: [
+        'assert "best_student: 2" in _stdout, f"row 2 totals 259, the highest; got: {_stdout!r}"',
+        'assert "hardest_test: 1" in _stdout, f"column 1 has the lowest mean (57.5); got: {_stdout!r}"',
+      ],
+      solutionHint:
+        'Row totals collapse the columns (axis=1), then argmax. Column means collapse the rows ' +
+        '(axis=0), then argmin.',
+      explanation:
+        'The two questions use opposite axes, which is the whole point: axis names the dimension being ' +
+        'collapsed. Row totals need axis=1; per-column means need axis=0. argmax/argmin then give you ' +
+        'the position rather than the value.',
+      trapNote:
+        'Swapping the two axis values still runs and still prints plausible small integers — it is ' +
+        'wrong silently, which is why axis is worth reasoning about rather than guessing.',
+    },
+    {
+      id: 'l18-chal-3',
+      type: 'multipleChoice',
+      stage: 'stretch',
+      tags: ['dataFrameIndexing'],
+      prompt:
+        'left has 3 rows with key values [1, 2, 2]; right has 2 rows with key values [2, 2].\n' +
+        'How many rows does left.merge(right, on="key") return?',
+      options: ['2', '3', '4', '5'],
+      answerIndex: 2,
+      explanation:
+        'A merge produces every matching PAIR. Key 1 matches nothing and drops out. Each of the two ' +
+        'left rows with key 2 pairs with each of the two right rows with key 2 — 2 x 2 = 4 rows. ' +
+        'Duplicate keys multiply rather than align.',
+      trapNote:
+        'This is how a merge silently inflates a dataset. Check len() before and after, or use ' +
+        'validate="one_to_one" to make pandas raise instead.',
+    },
+    {
+      id: 'l18-chal-4',
+      type: 'multipleChoice',
+      stage: 'stretch',
+      tags: ['vectorization', 'viewVsCopy'],
+      prompt:
+        'a = np.arange(6)\nb = a.reshape(2, 3)\nb[0, 0] = 99\n\nWhat is a[0]?',
+      options: [
+        '99 — reshape returns a view sharing the same buffer',
+        '0 — reshape returns an independent copy',
+        'An error — reshaped arrays are read-only',
+        '99, but only because the array is small enough to stay in place',
+      ],
+      answerIndex: 0,
+      explanation:
+        'reshape returns a view whenever it can, because the underlying data is unchanged — only the ' +
+        'shape metadata differs. Writing through the view therefore writes to the original. Use ' +
+        '.copy() when you need independence.',
+      trapNote:
+        'flatten() always copies, ravel() returns a view where possible. Picking by name rather than ' +
+        'by behaviour is how this bites.',
+    },
+  ],
 };

@@ -16,6 +16,7 @@ import { lesson14 } from './lessons/lesson14';
 import { lesson15 } from './lessons/lesson15';
 import { lesson16 } from './lessons/lesson16';
 import { lesson17 } from './lessons/lesson17';
+import { lesson18 } from './lessons/lesson18';
 import { ml01 } from './ml/ml01';
 import { ml02 } from './ml/ml02';
 import { ml03 } from './ml/ml03';
@@ -64,6 +65,7 @@ const ALL_LESSONS: Lesson[] = [
   lesson15,
   lesson16,
   lesson17,
+  lesson18,
 ].map((l) => mergeChallengeExtras(mergeBuildExtras(mergeInteractiveExtras(mergeLessonExtras(l)))));
 
 function mergeChallengeExtras<T extends { id: string; concepts: { id: string; title: string; objective: string; miniNote?: string; examples: Example[] }[] }>(
